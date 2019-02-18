@@ -57,6 +57,7 @@ private:
 	ID3D11GeometryShader* gGeometryShader;
 	ID3D11PixelShader* gPixelShader;
 
+
 	//---------------------------------------
 	//--------- Deferred rendering ----------
 	//---------------------------------------
