@@ -176,7 +176,7 @@ HRESULT Application::CreateDefShaders_Color()
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
-			"POSITION",					 // "semantic" name in shader
+			"SV_POSITION",					 // "semantic" name in shader
 			0,							 // "semantic" index (not used)
 			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
 			0,							 // input slot
@@ -204,7 +204,9 @@ HRESULT Application::CreateDefShaders_Color()
 		}
 	};
 
-	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gDefVS_Layout);
+	hr = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gDefVS_Layout);
+	if (FAILED(hr))
+		MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
 
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
@@ -360,7 +362,8 @@ HRESULT Application::CreateShaders()
 	};
 
 	hr = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
-
+	if (FAILED(hr))
+		MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
 
