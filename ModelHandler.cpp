@@ -111,9 +111,9 @@ void ModelHandler::addRndBox()
 	srand(time(NULL));
 	float size = Math::RandomInt(1, 3);
 
-	float x = Math::RandomInt(-20, 20);
-	float y = Math::RandomInt(-20, 20);
-	float z = Math::RandomInt(-20, 20);
+	float x = Math::RandomInt(-25, 25);
+	float y = Math::RandomInt(-25, 25);
+	float z = Math::RandomInt(0, 25);
 	
 	float rx = Math::RandomInt(0, 85);
 	float ry = Math::RandomInt(0, 85);
@@ -130,9 +130,6 @@ void ModelHandler::addRndBox()
 		model = L"CubeTris-1.obj";
 		break;
 	case 2:
-		model = L"Cube.obj";
-		break;
-	default:
 		model = L"Cube.obj";
 		break;
 	}

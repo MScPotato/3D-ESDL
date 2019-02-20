@@ -24,7 +24,7 @@ private:
 
 	// ImGui
 	int ModelsCounter = 0;
-	bool imguiInit = false;
+	bool IncrOnSpawn = false;
 	float size = 1;
 	float fx = 0.f;
 	float fy = 0.f;

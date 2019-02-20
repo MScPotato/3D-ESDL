@@ -92,7 +92,7 @@ bool Application::initModels()
 	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
 	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
 
-	//lightHandler->addLight(XMFLOAT3(3, 3, 0), XMFLOAT4(1, 0, 0, 5));
+	lightHandler->addLight(XMFLOAT3(10, 20, -10), XMFLOAT4(1, 1, 1, 1));
 	lightHandler->addLight(XMFLOAT3(-2, 3, 2), XMFLOAT4(1, 0, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
 	lightHandler->addLight(XMFLOAT3(2, 2, -2), XMFLOAT4(0, 0, 1, 3));
@@ -603,22 +603,39 @@ void Application::ImGuiRender()
 	// --------------------------------------------------------
 	// ImGui
 	// --------------------------------------------------------
-
+	
+	static bool imguiInit_Info = false;
+	static bool imguiInit_Spawn = false;
 	// Start ImGui frame
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	// Create ImGui Test window
-	if (!imguiInit)
+	if (!imguiInit_Info)
 	{
-		ImGui::SetNextWindowSize(ImVec2(230, 400));
-		imguiInit = true;
+		ImGui::SetNextWindowSize(ImVec2(270, 80));
+		ImGui::SetNextWindowPos(ImVec2(5, 0));
+		imguiInit_Info = true;
 	}
-	ImGui::Begin("Spawn Menu");
+	ImGui::Begin("Info");
 	ImGui::Text("FPS: %d", fps); ImGui::SameLine();
 	ImGui::Text("(%d)", ImGui::GetFrameCount());
-	
+	std::string camX = std::to_string(camera->getPosition().x);
+	std::string camY = std::to_string(camera->getPosition().y);
+	std::string camZ = std::to_string(camera->getPosition().z);
+	ImGui::Text("Camera: \n[%s/y: %s/z: %s]", camX.c_str(), camY.c_str(), camZ.c_str());
+	ImGui::End();
+	//10, 20, -10
+	// --------------------------------------------------------
+
+	if (!imguiInit_Spawn)
+	{
+		ImGui::SetNextWindowSize(ImVec2(270, 350));
+		ImGui::SetNextWindowPos(ImVec2(5, 82));
+		imguiInit_Spawn = true;
+	}
+	ImGui::Begin("Spawn Menu");
 	ImGui::Text("Objects: ");
 	ImGui::SameLine();
 	ImGui::Text(std::to_string(ModelsCounter).c_str());
@@ -637,6 +654,7 @@ void Application::ImGuiRender()
 	}
 	if (ImGui::Button("Load Scene"))
 	{
+		ModelsCounter = 0;
 		ObjHandler->ClearObjects();
 		ModelsCounter += ObjHandler->LoadScene1();
 		//lightHandler->ClearLights();
@@ -646,32 +664,32 @@ void Application::ImGuiRender()
 
 	ImGui::Text("Cube Position");
 	ImGui::SliderFloat("Size", &size, 1, 5);
-	ImGui::SliderFloat("Pos X", &fx, -16, 16);
-	ImGui::SliderFloat("Pos Y", &fy, -16, 16);
-	ImGui::SliderFloat("Pos Z", &fz, -16, 16);
+	ImGui::SliderFloat("Pos X", &fx, -35, 35);
+	ImGui::SliderFloat("Pos Y", &fy, -35, 35);
+	ImGui::SliderFloat("Pos Z", &fz, -35, 35);
 	ImGui::SliderFloat("Angle X", &ax, -180, 180);
 	ImGui::SliderFloat("Angle Y", &ay, -180, 180);
 	ImGui::SliderFloat("Angle Z", &az, -180, 180);
-
+	if (ImGui::Button("Reset"))
+	{
+		size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
+	}
+	ImGui::Separator();
+	//ImGui::SameLine();
+	ImGui::Checkbox("Incr", &IncrOnSpawn); ImGui::SameLine();
 	if (ImGui::Button("Add Cube"))
 	{
 		ObjHandler->addModel(fx, fy, fz, size, ax, ay, az);
-		fx += 1.5f;
+		if(IncrOnSpawn) fx += 1.5f;
 		ModelsCounter++;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Add Sphere"))
 	{
 		ObjHandler->addSphere(fx, fy, fz, size, ax, ay, az);
-		fx += 2.5;
+		if (IncrOnSpawn) fx += 1.5f;
 		ModelsCounter++;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Reset"))
-	{
-		size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
-	}
-	ImGui::Separator();
+	}	
 	if (ImGui::Button("Clear Scene"))
 	{
 		ObjHandler->ClearObjects();
