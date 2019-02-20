@@ -26,6 +26,7 @@ Camera::Camera(float width, float height, HWND wndHandle)
 
 	GetCursorPos(&currMousePos);
 	this->mouseSense = CAMSPEED * 20;
+	this->boost = 5.f;
 	this->mouseX = window.right / 2;
 	this->mouseY = window.bottom / 2;
 
@@ -50,6 +51,11 @@ Camera::~Camera()
 
 void Camera::UpdateCamera(float dt)
 {
+	if (GetAsyncKeyState(VK_SHIFT) < 0)
+	{
+		dt *= boost;
+	}
+
 	if (GetAsyncKeyState('W') < 0)
 	{
 		camPosition = {

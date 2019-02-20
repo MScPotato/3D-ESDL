@@ -3,11 +3,12 @@
 #include "ModelHandler.h"
 #include "LightHandler.h"
 
+const int NROF_PASSES = 4;
+
 class Application
 {
 private:
 	float width, height;
-	float nrOfIndicies;
 	HWND hwnd;
 	HRESULT hr;
 
@@ -21,7 +22,8 @@ private:
 	Timer timer;
 	double dt = 0.f;
 
-	int boxCounter = 0;
+	// ImGui
+	int ModelsCounter = 0;
 	bool imguiInit = false;
 	float size = 1;
 	float fx = 0.f;
@@ -52,9 +54,11 @@ private:
 	ID3D11InputLayout* gVertexLayout;
 	ID3D11Buffer* gConstantBuffer;
 
+	ID3D11Buffer* gQuadBuffer;
+
 	// resources that represent shaders
 	ID3D11VertexShader* gVertexShader;
-	ID3D11GeometryShader* gGeometryShader;
+	//ID3D11GeometryShader* gGeometryShader;
 	ID3D11PixelShader* gPixelShader;
 
 
@@ -62,22 +66,15 @@ private:
 	//--------- Deferred rendering ----------
 	//---------------------------------------
 
-	// Deferred Color
-	ID3D11InputLayout* gDefVS_Layout;
+	ID3D11Texture2D* gDefTex[NROF_PASSES];
+	ID3D11RenderTargetView* gDefRTV[NROF_PASSES];
+	ID3D11ShaderResourceView* gDefSRV[NROF_PASSES];
+	ID3D11InputLayout* gDefVLayout;
 
-	ID3D11VertexShader* gDefVS_Color;
-	//ID3D11GeometryShader* gDefGS_Color;
-	ID3D11PixelShader* gDefPS_Color;
+	ID3D11VertexShader* gDefVS;
+	ID3D11GeometryShader* gDefGS;
+	ID3D11PixelShader* gDefPS;
 
-	// Deferred Normal
-	//ID3D11VertexShader* gDefVS_Normal;
-	//ID3D11GeometryShader* gDefGS_Normal;
-	//ID3D11PixelShader* gDefPS_Normal;
-
-	//// Deferred Position
-	//ID3D11VertexShader* gDefVS_Position;
-	//ID3D11GeometryShader* gDefGS_Position;
-	//ID3D11PixelShader* gDefPS_Position;
 	//---------------------------------------
 
 	ID3D11DepthStencilView* depthStencilView;
@@ -94,13 +91,14 @@ public:
 
 	bool initModels();
 	//HRESULT CreateDeferredShaders();
-	HRESULT CreateDefShaders_Color();
-	HRESULT CreateShaders();
+	void CreateDefShaders_Color();
+	void CreateGBuffers(); // Deferred Tex, RTV, SRV
+	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
 	HRESULT CreateConstantbufferDescription();
 	HRESULT UpdateConstBuffer();
 	HRESULT UpdateCamBuffer();
-	HRESULT initiateApplication();
+	void initiateApplication();
 	void Update();
 	void SetViewport();
 	void Render();
@@ -109,5 +107,7 @@ public:
 	void DepthStencil();
 	void SetSampleState();
 	void SetupImGui();
+
+	void CreateQuadBuffer();
 };
 

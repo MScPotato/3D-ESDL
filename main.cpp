@@ -22,10 +22,8 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 	
 	if (wndHandle)
 	{
-		if (FAILED(app.initiateApplication()))
-		{
-			MessageBox(NULL, L"CRITICAL ERROR Initiating App!", L"ERROR", MB_OK);
-		}
+		app.initiateApplication();
+
 		ShowWindow(wndHandle, nCmdShow);
 
 		while (WM_QUIT != msg.message && !GetAsyncKeyState(VK_ESCAPE))

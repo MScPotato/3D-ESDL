@@ -25,6 +25,8 @@ private:
 public:
 	LightHandler();
 	~LightHandler();
+	void ClearLights();
+
 	void Init(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext);
 	bool addLight(XMFLOAT3 pos = { 0, 0, 0 }, XMFLOAT4 rgba = { 0,0,0,1 });//void?
 	

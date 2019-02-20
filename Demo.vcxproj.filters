@@ -89,17 +89,17 @@
     <FxCompile Include="Pixel.hlsl">
       <Filter>Resource Files\DefaultShaders</Filter>
     </FxCompile>
-    <FxCompile Include="Geometry.hlsl">
-      <Filter>Resource Files\DefaultShaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DefP_Color.hlsl">
-      <Filter>Resource Files\DeferredShaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DefV_Color.hlsl">
-      <Filter>Resource Files\DeferredShaders</Filter>
-    </FxCompile>
     <FxCompile Include="Vertex.hlsl">
       <Filter>Resource Files\DefaultShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DefGeometry.hlsl">
+      <Filter>Resource Files\DeferredShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DefPixel.hlsl">
+      <Filter>Resource Files\DeferredShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DefVertex.hlsl">
+      <Filter>Resource Files\DeferredShaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +164,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Check.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

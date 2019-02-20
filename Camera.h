@@ -30,7 +30,7 @@ private:
 
 	POINT currMousePos;
 	RECT window;
-	float mouseSense;
+	float mouseSense, boost;
 	float mouseX, mouseY;
 
 	int showMouse;

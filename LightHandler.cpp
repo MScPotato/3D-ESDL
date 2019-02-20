@@ -13,6 +13,11 @@ LightHandler::~LightHandler()
 {
 }
 
+void LightHandler::ClearLights()
+{
+	lights.clear();
+}
+
 void LightHandler::Init(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext)
 {
 		this->gDevice = gDevice;

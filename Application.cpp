@@ -15,19 +15,19 @@ Application::Application(float width, float height, HWND wndHandle)
 	gIndexBuffer = nullptr;
 	gVertexLayout = nullptr;
 	gVertexShader = nullptr;
-	gGeometryShader = nullptr;
+	//gGeometryShader = nullptr;
 	gPixelShader = nullptr;
 	gSampleStateWrap = nullptr;
 	gTextureSRV = nullptr;
+	gQuadBuffer = nullptr;
 
 	gConstantBuffer = nullptr;
-	gDefVS_Layout = nullptr;
-	gDefVS_Color = nullptr;
-	gDefPS_Color = nullptr;
+	gDefVS = nullptr;
+	gDefGS = nullptr;
+	gDefPS = nullptr;
 
 	depthStencilView = nullptr;
 	depthStencilBuffer = nullptr;
-	nrOfIndicies = 0;
 
 	camera = new Camera(width, height, wndHandle);
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
@@ -53,7 +53,7 @@ Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 	//gDeviceContext->Release();
 }
 
-HRESULT Application::initiateApplication()
+void Application::initiateApplication()
 {
 	hr = CreateDirect3DContext(hwnd); //2. Skapa och koppla SwapChain, Device och Device Context
 	if (FAILED(hr))
@@ -61,24 +61,27 @@ HRESULT Application::initiateApplication()
 	
 	CreateConstantbufferDescription();
 	CreateCameraBuffer();
+	CreateQuadBuffer();
 	SetViewport(); //3. Sätt viewport
 	SetSampleState();
+	SetupImGui();
 
-	//hr = CreateShaders(); //4. Skapa vertex- och pixel-shaders
-	hr = CreateDefShaders_Color();
+	CreateGBuffers();
+	CreateShaders(); //4. Skapa vertex- och pixel-shaders
+	CreateDefShaders_Color();
 
-	if (FAILED(hr))
-		MessageBox(NULL, L"CRITICAL ERROR: Could not create Shaders", L"ERROR", MB_OK);
+	//if (FAILED(hr))
+	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Shaders", L"ERROR", MB_OK);
 
 	initModels();
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"CRITICAL ERROR: Could not create Models", L"ERROR", MB_OK);
-	}
+	//if (FAILED(hr))
+	//{
+	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Models", L"ERROR", MB_OK);
+	//}
 
 	//app.CreateTriangleData(); 
 	//5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
-	return hr;
+	//return hr;
 }
 
 bool Application::initModels()
@@ -89,9 +92,10 @@ bool Application::initModels()
 	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
 	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
 
-	lightHandler->addLight(XMFLOAT3(0, 3, 0), XMFLOAT4(1, 0, 0, 3));
+	//lightHandler->addLight(XMFLOAT3(3, 3, 0), XMFLOAT4(1, 0, 0, 5));
+	lightHandler->addLight(XMFLOAT3(-2, 3, 2), XMFLOAT4(1, 0, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
-	//lightHandler->addLight(XMFLOAT3(0, 0, -3), XMFLOAT4(0, 0, 1, 3));
+	lightHandler->addLight(XMFLOAT3(2, 2, -2), XMFLOAT4(0, 0, 1, 3));
 	//lightHandler->addLight(XMFLOAT3(0, 0, 3), XMFLOAT4(1, 0, 1, 3));
 	//lightHandler->addLight(XMFLOAT3(3, 0, 0), XMFLOAT4(1, 1, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(-3, 0, 0), XMFLOAT4(0, 1, 1, 3));
@@ -100,7 +104,7 @@ bool Application::initModels()
 	lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addModel(0, 0, 0, 1, 0, 0, 0, L"candysun.obj");
+	ObjHandler->addSphere();
 
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
@@ -133,8 +137,7 @@ void Application::CalcFPS(double dt)
 	}
 }
 
-
-HRESULT Application::CreateDefShaders_Color()
+void Application::CreateDefShaders_Color()
 {
 	// Binary Large OBject (BLOB), for compiled shader, and errors.
 	ID3DBlob* pVS = nullptr;
@@ -142,8 +145,8 @@ HRESULT Application::CreateDefShaders_Color()
 
 	/** Vertex Shader **/
 
-	hr = D3DCompileFromFile(
-		L"DefV_Color.hlsl",		// filename
+	CHECK_HR(D3DCompileFromFile(
+		L"DefVertex.hlsl",		// filename
 		nullptr,			// optional macros
 		nullptr,			// optional include files
 		"VS_main",			// entry point
@@ -152,85 +155,9 @@ HRESULT Application::CreateDefShaders_Color()
 		0,					// IGNORE...DEPRECATED.
 		&pVS,				// double pointer to ID3DBlob		
 		&errorBlob			// pointer for Error Blob messages.
-	);
+	));
 
 	// compilation failed?
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			errorBlob->Release();
-		}
-		if (pVS)
-			pVS->Release();
-		return hr;
-	}
-
-	gDevice->CreateVertexShader(
-		pVS->GetBufferPointer(),
-		pVS->GetBufferSize(),
-		nullptr,
-		&gDefVS_Color
-	);
-
-	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
-		{
-			"SV_POSITION",					 // "semantic" name in shader
-			0,							 // "semantic" index (not used)
-			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
-			0,							 // input slot
-			0,							 // offset of first element
-			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
-			0							 // used for INSTANCING (ignore)
-		},
-		{
-			"TEXCOORD",
-			0,							 // same slot as previous (same vertexBuffer)
-			DXGI_FORMAT_R32G32_FLOAT,
-			0,
-			D3D11_APPEND_ALIGNED_ELEMENT,							 // offset of FIRST element (after POSITION)
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		},
-		{
-			"NORMAL",
-			0,							 // same slot as previous (same vertexBuffer)
-			DXGI_FORMAT_R32G32B32_FLOAT,
-			0,
-			D3D11_APPEND_ALIGNED_ELEMENT,							 // offset of FIRST element (after POSITION)
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		}
-	};
-
-	hr = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gDefVS_Layout);
-	if (FAILED(hr))
-		MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
-
-	// we do not need anymore this COM object, so we release it.
-	pVS->Release();
-
-
-
-	/** Geometry Shader **/
-	//ID3DBlob* pGS = nullptr;
-	//if (errorBlob) errorBlob->Release();
-	//errorBlob = nullptr;
-
-	//hr = D3DCompileFromFile(
-	//	L"Shaders/Geometry.hlsl",		// filename
-	//	nullptr,			// optional macros
-	//	nullptr,			// optional include files
-	//	"GS_main",			// entry point
-	//	"gs_5_0",			// shader model (target)
-	//	D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-	//	0,					// IGNORE...DEPRECATED.
-	//	&pGS,				// double pointer to ID3DBlob		
-	//	&errorBlob			// pointer for Error Blob messages.
-	//);
-
-	//// compilation failed?
 	//if (FAILED(hr))
 	//{
 	//	if (errorBlob)
@@ -238,98 +165,17 @@ HRESULT Application::CreateDefShaders_Color()
 	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	//		errorBlob->Release();
 	//	}
-	//	if (pGS)
-	//		pGS->Release();
+	//	if (pVS)
+	//		pVS->Release();
 	//	return hr;
 	//}
 
-	//gDevice->CreateGeometryShader(
-	//	pGS->GetBufferPointer(),
-	//	pGS->GetBufferSize(),
-	//	nullptr,
-	//	&gGeometryShader);
-
-	/** Pixel Shader **/
-	//create pixel shader
-	ID3DBlob* pPS = nullptr;
-	if (errorBlob) errorBlob->Release();
-	errorBlob = nullptr;
-	hr = D3DCompileFromFile(
-		L"DefP_Color.hlsl",		// filename
-		nullptr,				// optional macros
-		nullptr,				// optional include files
-		"PS_main",				// entry point
-		"ps_5_0",				// shader model (target)
-		D3DCOMPILE_DEBUG,		// shader compile options
-		0,						// effect compile options
-		&pPS,					// double pointer to ID3DBlob		
-		&errorBlob				// pointer for Error Blob messages.
-	);
-
-	// compilation failed?
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			errorBlob->Release();
-		}
-		if (pPS)
-			pPS->Release();
-		return hr;
-	}
-
-	hr = gDevice->CreatePixelShader(
-		pPS->GetBufferPointer(),
-		pPS->GetBufferSize(),
-		nullptr, &gDefPS_Color);
-	pPS->Release();
-
-	DepthStencil();
-	SetupImGui();
-
-	return hr;
-}
-
-HRESULT Application::CreateShaders()
-{
-	// Binary Large OBject (BLOB), for compiled shader, and errors.
-	ID3DBlob* pVS = nullptr;
-	ID3DBlob* errorBlob = nullptr;
-
-	/** Vertex Shader **/
-
-	hr = D3DCompileFromFile(
-		L"Vertex.hlsl",		// filename
-		nullptr,			// optional macros
-		nullptr,			// optional include files
-		"VS_main",			// entry point
-		"vs_5_0",			// shader model (target)
-		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-		0,					// IGNORE...DEPRECATED.
-		&pVS,				// double pointer to ID3DBlob		
-		&errorBlob			// pointer for Error Blob messages.
-	);
-
-	// compilation failed?
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			errorBlob->Release();
-		}
-		if (pVS)
-			pVS->Release();
-		return hr;
-	}
-
-	gDevice->CreateVertexShader(
+	CHECK_HR(gDevice->CreateVertexShader(
 		pVS->GetBufferPointer(),
 		pVS->GetBufferSize(),
 		nullptr,
-		&gVertexShader
-	);
+		&gDefVS
+	));
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
@@ -361,9 +207,155 @@ HRESULT Application::CreateShaders()
 		}
 	};
 
-	hr = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
-	if (FAILED(hr))
-		MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
+	CHECK_HR(gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gDefVLayout));
+	//if (FAILED(hr))
+	//	MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
+	// we do not need anymore this COM object, so we release it.
+	pVS->Release();
+
+
+
+	/** Geometry Shader **/
+	ID3DBlob* pGS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	CHECK_HR(D3DCompileFromFile(
+		L"DefGeometry.hlsl",		// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"GS_main",			// entry point
+		"gs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pGS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	));
+
+	// compilation failed?
+	//if (FAILED(hr))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		errorBlob->Release();
+	//	}
+	//	if (pGS)
+	//		pGS->Release();
+	//}
+
+	CHECK_HR(gDevice->CreateGeometryShader(
+		pGS->GetBufferPointer(),
+		pGS->GetBufferSize(),
+		nullptr,
+		&gDefGS));
+
+	/** Pixel Shader **/
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+	CHECK_HR(D3DCompileFromFile(
+		L"DefPixel.hlsl",		// filename
+		nullptr,				// optional macros
+		nullptr,				// optional include files
+		"PS_main",				// entry point
+		"ps_5_0",				// shader model (target)
+		D3DCOMPILE_DEBUG,		// shader compile options
+		0,						// effect compile options
+		&pPS,					// double pointer to ID3DBlob		
+		&errorBlob				// pointer for Error Blob messages.
+	));
+
+	// compilation failed?
+	//if (FAILED(hr))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		errorBlob->Release();
+	//	}
+	//	if (pPS)
+	//		pPS->Release();
+	//	return hr;
+	//}
+
+	CHECK_HR(gDevice->CreatePixelShader(
+		pPS->GetBufferPointer(),
+		pPS->GetBufferSize(),
+		nullptr, &gDefPS));
+	pPS->Release();
+
+	//DepthStencil();
+	SetupImGui();
+
+	//return hr;
+}
+
+void Application::CreateShaders()
+{
+	// Binary Large OBject (BLOB), for compiled shader, and errors.
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	/** Vertex Shader **/
+
+	CHECK_HR(D3DCompileFromFile(
+		L"Vertex.hlsl",		// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"VS_main",			// entry point
+		"vs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pVS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	));
+
+	// compilation failed?
+	//if (FAILED(hr))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		errorBlob->Release();
+	//	}
+	//	if (pVS)
+	//		pVS->Release();
+	//	return hr;
+	//}
+
+	CHECK_HR(gDevice->CreateVertexShader(
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
+		&gVertexShader
+	));
+
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{
+			"POSITION",					 // "semantic" name in shader
+			0,							 // "semantic" index (not used)
+			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
+			0,							 // input slot
+			0,							 // offset of first element
+			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+			0							 // used for INSTANCING (ignore)
+		},
+		{
+			"TEXCOORD",
+			0,							 // same slot as previous (same vertexBuffer)
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			D3D11_APPEND_ALIGNED_ELEMENT,							 // offset of FIRST element (after POSITION)
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+	};
+
+	CHECK_HR(gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout));
+	//if (FAILED(hr))
+	//	MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
 
@@ -410,7 +402,7 @@ HRESULT Application::CreateShaders()
 	ID3DBlob* pPS = nullptr;
 	if (errorBlob) errorBlob->Release();
 	errorBlob = nullptr;
-	hr = D3DCompileFromFile(
+	CHECK_HR(D3DCompileFromFile(
 		L"Pixel.hlsl",		// filename
 		nullptr,				// optional macros
 		nullptr,				// optional include files
@@ -420,31 +412,30 @@ HRESULT Application::CreateShaders()
 		0,						// effect compile options
 		&pPS,					// double pointer to ID3DBlob		
 		&errorBlob				// pointer for Error Blob messages.
-	);
+	));
 
 	// compilation failed?
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			errorBlob->Release();
-		}
-		if (pPS)
-			pPS->Release();
-		return hr;
-	}
+	//if (FAILED(hr))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		errorBlob->Release();
+	//	}
+	//	if (pPS)
+	//		pPS->Release();
+	//	return hr;
+	//}
 
-	hr = gDevice->CreatePixelShader(
+	CHECK_HR(gDevice->CreatePixelShader(
 		pPS->GetBufferPointer(),
 		pPS->GetBufferSize(),
-		nullptr, &gPixelShader);
+		nullptr, &gPixelShader));
 	pPS->Release();
 
-	DepthStencil();
-	SetupImGui();
+	//DepthStencil();
 
-	return hr;
+	//return hr;
 }
 
 HRESULT Application::CreateConstantbufferDescription()
@@ -486,6 +477,7 @@ void Application::CreateCameraBuffer()
 
 	hr = gDevice->CreateBuffer(&cbufferDesc, &data, &camBuffer);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
+	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
 }
 
 void Application::SetViewport() // directx, run once.
@@ -539,6 +531,7 @@ HRESULT Application::UpdateCamBuffer()
 	memcpy(mappedResource.pData, &camera->getPosition(), sizeof(XMFLOAT4));
 	gDeviceContext->Unmap(camBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
+	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
 	return hr;
 }
 
@@ -546,44 +539,62 @@ void Application::Render()
 {
 	// clear the back buffer to a deep blue
 	float clearColor[] = { 0.2, 0.3, 0.3, 1 };
-	//float clearColor[] = { 0.8, 0.8, 0.8, 1 };
+	//float clearColor[] = { 0.0, 0.0, 0.0, 1.0 };
 	// use DeviceContext to talk to the API
-	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, clearColor);
+	for (int i = 0; i < 4; i++)
+	{
+		gDeviceContext->ClearRenderTargetView(gDefRTV[i], clearColor);
+	}
 	gDeviceContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	//D3D11_MAPPED_SUBRESOURCE dataptr;
-	//gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataptr);
-	//memcpy(dataptr.pData, &constBuffData, sizeof(Constantbuffer));
-	//gDeviceContext->Unmap(gConstantBuffer, 0);
-
-	// specifying NULL or nullptr we are disabling that stage
-	// in the pipeline
-	gDeviceContext->VSSetShader(gDefVS_Color, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->PSSetShader(gDefPS_Color, nullptr, 0);
 
 	UpdateConstBuffer();
 	UpdateCamBuffer();
 
-	//gDeviceContext->PSSetSamplers(0, 1, &gSampleStateClamp); // once
-	//UINT32 aSize = sizeof(Constantbuffer);
-	// specify which vertex buffer to use next.
-	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	//setvertexbuffer
-	//gDeviceContext->IASetVertexBuffers(1, 1, &gConstantBuffer, &aSize, &offset);
-	//gDeviceContext->IASetIndexBuffer(gIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	// ------------------------------------------------------------------------
+	//** Deferred Rendering **//
+
+	gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, depthStencilView); //4 st
+
+	// specifying NULL or nullptr we are disabling that stage
+	// in the pipeline
+	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
+	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
 
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gDefVS_Layout);
-
-	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->IASetInputLayout(gDefVLayout);
 	drawAll();
+	
+	// ------------------------------------------------------------------------
+	//** Default Rendering **//
+	UINT quadSize = sizeof(float) * 5;
+	UINT offset = 0;
+	
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gQuadBuffer, &quadSize, &offset);
+
+	float errorColor[] = { 1.0, 0.0, 0.0, 1 };
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, errorColor);
+	
+	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	//gDeviceContext->HSSetShader(nullptr, nullptr, 0); <-not changed
+	//gDeviceContext->DSSetShader(nullptr, nullptr, 0); <-not changed
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
+
+	for (int i = 0; i < NROF_PASSES; i++) {
+		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
+	}
+	gDeviceContext->IASetInputLayout(gVertexLayout);
+	gDeviceContext->Draw(6, 0);
+
 	ImGuiRender();
 
-	// Present the backbuffer
+	// Present the backbuffer / present the finished image quad
 	gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
 }
 
@@ -601,28 +612,35 @@ void Application::ImGuiRender()
 	// Create ImGui Test window
 	if (!imguiInit)
 	{
-		ImGui::SetNextWindowSize(ImVec2(230, 350));
+		ImGui::SetNextWindowSize(ImVec2(230, 400));
 		imguiInit = true;
 	}
-	ImGui::Begin("Debug Cubes");
-	ImGui::Text("FPS: %d", fps);
-	ImGui::Text("Frames: %d", ImGui::GetFrameCount());
+	ImGui::Begin("Spawn Menu");
+	ImGui::Text("FPS: %d", fps); ImGui::SameLine();
+	ImGui::Text("(%d)", ImGui::GetFrameCount());
 	
-	ImGui::Text("Cubes: ");
+	ImGui::Text("Objects: ");
 	ImGui::SameLine();
-	ImGui::Text(std::to_string(boxCounter).c_str());
+	ImGui::Text(std::to_string(ModelsCounter).c_str());
 	ImGui::Separator();
 
 	if (ImGui::Button("Add Random Cube"))
 	{
 		ObjHandler->addRndBox();
-		boxCounter++;
+		ModelsCounter++;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Add 9x9 Cubes"))
 	{
 		ObjHandler->add9x9Model();
-		boxCounter += 81;
+		ModelsCounter += 81;
+	}
+	if (ImGui::Button("Load Scene"))
+	{
+		ObjHandler->ClearObjects();
+		ModelsCounter += ObjHandler->LoadScene1();
+		//lightHandler->ClearLights();
+		//lightHandler->addLight(XMFLOAT3(0, 2, 0), XMFLOAT4(1, 1, 1, 10));
 	}
 	ImGui::Separator();
 
@@ -638,7 +656,15 @@ void Application::ImGuiRender()
 	if (ImGui::Button("Add Cube"))
 	{
 		ObjHandler->addModel(fx, fy, fz, size, ax, ay, az);
-		boxCounter++;
+		fx += 1.5f;
+		ModelsCounter++;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Add Sphere"))
+	{
+		ObjHandler->addSphere(fx, fy, fz, size, ax, ay, az);
+		fx += 2.5;
+		ModelsCounter++;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
@@ -646,11 +672,11 @@ void Application::ImGuiRender()
 		size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
 	}
 	ImGui::Separator();
-
-	if (ImGui::Button("Remove All Objs"))
+	if (ImGui::Button("Clear Scene"))
 	{
 		ObjHandler->ClearObjects();
-		boxCounter = 0;
+		size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
+		ModelsCounter = 0;
 	}
 
 	ImGui::End();
@@ -711,9 +737,57 @@ HRESULT Application::CreateDirect3DContext(HWND wndHandle)
 		pBackBuffer->Release();
 
 		// set the render target as the back buffer
-		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
+		DepthStencil();
+		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+
 	}
 	return hr;
+}
+
+void Application::CreateGBuffers() // Deferred Shading
+{
+	D3D11_TEXTURE2D_DESC texDesc;
+	ZeroMemory(&texDesc, sizeof(texDesc));
+	texDesc.Width = width;
+	texDesc.Height = height;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.MiscFlags = 0;
+	texDesc.CPUAccessFlags = 0;
+
+	for (int i = 0; i < NROF_PASSES; i++)
+	{
+		gDevice->CreateTexture2D(&texDesc, NULL, &gDefTex[i]);
+	}
+
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	ZeroMemory(&rtvDesc, sizeof(rtvDesc));
+	rtvDesc.Format = texDesc.Format;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+
+	for (int i = 0; i < NROF_PASSES; i++)
+	{
+		gDevice->CreateRenderTargetView(gDefTex[i], &rtvDesc, &gDefRTV[i]);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = texDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+
+	for (int i = 0; i < NROF_PASSES; i++)
+	{
+		gDevice->CreateShaderResourceView(gDefTex[i], &srvDesc, &gDefSRV[i]);
+	}
+
 }
 
 void Application::DepthStencil()
@@ -735,7 +809,7 @@ void Application::DepthStencil()
 	gDevice->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
 	gDevice->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
 
-	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+	//gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
 }
 
 void Application::SetupImGui()
@@ -749,3 +823,63 @@ void Application::SetupImGui()
 	ImGui::StyleColorsDark();
 }
 
+void Application::CreateQuadBuffer()
+{
+	struct VertexData
+	{
+		float x, y, z;
+		float u, v;
+	};
+
+	VertexData quadVertex[6] =
+	{
+		-1.f, 1.f, 0.f,
+		0.f, 0.f,
+
+		1.f, 1.f, 0.f,
+		1.f, 0.f,
+
+		1.f, -1.f, 0.f,
+		1.f, 1.f,
+
+		-1.f, 1.f, 0.f,
+		0.f, 0.f,
+
+		1.f, -1.f, 0.f,
+		1.f, 1.f,
+
+		-1.f, -1.f, 0.f,
+		0.f, 1.f
+	};
+
+	//VertexData quadVertex[6] =
+	//{
+	//	-0.5f, 0.5f, 0.f,
+	//	0.f, 0.f,
+
+	//	0.5f, 0.5f, 0.f,
+	//	1.f, 0.f,
+
+	//	0.5f, -0.5f, 0.f,
+	//	1.f, 1.f,
+
+	//	-0.5f, 0.5f, 0.f,
+	//	0.f, 0.f,
+
+	//	0.5f, -0.5f, 0.f,
+	//	1.f, 1.f,
+
+	//	-0.5f, -0.5f, 0.f,
+	//	0.f, 1.f
+	//};
+
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDesc.ByteWidth = sizeof(quadVertex);
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = quadVertex;
+	CHECK_HR(gDevice->CreateBuffer(&bufferDesc, &data, &gQuadBuffer));
+}
