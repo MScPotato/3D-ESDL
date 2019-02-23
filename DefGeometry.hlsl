@@ -29,7 +29,7 @@ void GS_main(
 
     for (uint i = 0; i < 3; i++)
     {
-        if (dot(normalize( /*float3(0, 0, -2)*/camPos - input[i].wPos.xyz), input[i].normal) > -0.1)
+        //if (dot(normalize( /*float3(0, 0, -2)*/camPos - input[i].wPos.xyz), input[i].normal) > -0.2)
         {
             element.Pos = input[i].Pos;
             element.wPos = input[i].wPos;

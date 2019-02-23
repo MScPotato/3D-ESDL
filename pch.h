@@ -9,6 +9,7 @@ using namespace DirectX;
 
 #include <time.h>
 #include <vector>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 

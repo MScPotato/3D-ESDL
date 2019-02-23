@@ -80,6 +80,7 @@ Light LightHandler::getLight(int pos)
 
 void LightHandler::draw()
 {
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//for (int i = 0; i < lights.size(); i++)
 	{
 		setLightArr();

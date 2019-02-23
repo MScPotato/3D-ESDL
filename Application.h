@@ -2,23 +2,25 @@
 #include "Camera.h"
 #include "ModelHandler.h"
 #include "LightHandler.h"
-
+#include "Terrain.h"
 const int NROF_PASSES = 4;
 
 class Application
 {
 private:
+	// foundation
 	float width, height;
 	HWND hwnd;
 	HRESULT hr;
-
-
 	Constantbuffer constBuffData;
 	
+	// class objs
 	Camera* camera;
+	Terrain* wTerrain;
 	ModelHandler* ObjHandler;
 	LightHandler* lightHandler;
 
+	// time
 	Timer timer;
 	double dt = 0.f;
 
@@ -33,34 +35,32 @@ private:
 	float ay = 0.f;
 	float az = 0.f;
 
+	//fps
 	void CalcFPS(double dt);
 	int fpsCounter = 0;
 	float fpsTimer = 0.f;
 	int fps = 0.f;
 
 private:
-	IDXGISwapChain* gSwapChain;
 
 	// objects to instruct the API what to do.
 	ID3D11Device* gDevice;
 	ID3D11DeviceContext* gDeviceContext;
-
-	// A "view" of a particular resource (the color buffer)
-	ID3D11RenderTargetView* gBackbufferRTV;
+	
+	IDXGISwapChain* gSwapChain;
+	ID3D11RenderTargetView* gBackbufferRTV; // A "view" of a particular resource (the color buffer)
 
 	// a resource to store Vertices in the GPU
-	//ID3D11Buffer* gVertexBuffer;
-	ID3D11Buffer* gIndexBuffer;
 	ID3D11InputLayout* gVertexLayout;
 	ID3D11Buffer* gConstantBuffer;
-
 	ID3D11Buffer* gQuadBuffer;
 
-	// resources that represent shaders
-	ID3D11VertexShader* gVertexShader;
-	//ID3D11GeometryShader* gGeometryShader;
-	ID3D11PixelShader* gPixelShader;
+	//---------------------------------------
+	//--------- Default rendering ----------
+	//---------------------------------------
 
+	ID3D11VertexShader* gVertexShader;
+	ID3D11PixelShader* gPixelShader;
 
 	//---------------------------------------
 	//--------- Deferred rendering ----------
@@ -83,15 +83,17 @@ private:
 
 	ID3D11ShaderResourceView* gTextureSRV;
 
+	// Camera
 	ID3D11Buffer* camBuffer;
 	void CreateCameraBuffer();
 public:
 	Application(float width, float height, HWND wndHandle);
 	~Application();
 
+	void initTerrain();
 	bool initModels();
 	//HRESULT CreateDeferredShaders();
-	void CreateDefShaders_Color();
+	void CreateDefShaders();
 	void CreateGBuffers(); // Deferred Tex, RTV, SRV
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
@@ -108,6 +110,6 @@ public:
 	void SetSampleState();
 	void SetupImGui();
 
-	void CreateQuadBuffer();
+	void CreateQuadBuffer(); // Finished frame quad
 };
 

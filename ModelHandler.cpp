@@ -144,6 +144,7 @@ void ModelHandler::update()
 
 void ModelHandler::draw(Constantbuffer &constBuffData)
 {
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	for (int i = 0; i < models.size(); i++)
 	{
 		UpdateWorldConstBuffer(i, constBuffData);

@@ -12,7 +12,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	gDevice = nullptr;
 	gDeviceContext = nullptr;
 	gBackbufferRTV = nullptr;
-	gIndexBuffer = nullptr;
+	//gIndexBuffer = nullptr;
 	gVertexLayout = nullptr;
 	gVertexShader = nullptr;
 	//gGeometryShader = nullptr;
@@ -37,6 +37,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
+	wTerrain = new Terrain();
 }
 
 Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
@@ -68,11 +69,12 @@ void Application::initiateApplication()
 
 	CreateGBuffers();
 	CreateShaders(); //4. Skapa vertex- och pixel-shaders
-	CreateDefShaders_Color();
+	CreateDefShaders();
 
 	//if (FAILED(hr))
 	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Shaders", L"ERROR", MB_OK);
 
+	initTerrain();
 	initModels();
 	//if (FAILED(hr))
 	//{
@@ -82,6 +84,14 @@ void Application::initiateApplication()
 	//app.CreateTriangleData(); 
 	//5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 	//return hr;
+}
+
+void Application::initTerrain()
+{
+	wTerrain->initTerrain(gDevice, gDeviceContext);
+	wTerrain->loadHeightmap();
+	wTerrain->BuildQuadPatchVB();
+	wTerrain->BuildQuadPatchIB();
 }
 
 bool Application::initModels()
@@ -137,7 +147,7 @@ void Application::CalcFPS(double dt)
 	}
 }
 
-void Application::CreateDefShaders_Color()
+void Application::CreateDefShaders()
 {
 	// Binary Large OBject (BLOB), for compiled shader, and errors.
 	ID3DBlob* pVS = nullptr;
@@ -563,8 +573,6 @@ void Application::Render()
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
 	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
 
-	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gDefVLayout);
 	drawAll();
@@ -710,6 +718,7 @@ void Application::ImGuiRender()
 
 void Application::drawAll()
 {
+	wTerrain->draw(constBuffData, gConstantBuffer);
 	ObjHandler->draw(constBuffData);
 	lightHandler->draw();
 }

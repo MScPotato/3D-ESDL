@@ -37,3 +37,9 @@ struct LightData
 	XMFLOAT4 position; // w = 1
 	XMFLOAT4 rgba; // red, green, blue, intensity
 };
+
+struct TerrainVertex
+{
+	XMFLOAT3 pos;
+	XMFLOAT2 uv;
+};
