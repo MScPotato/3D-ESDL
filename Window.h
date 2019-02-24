@@ -37,7 +37,7 @@ static HWND InitWindow(HINSTANCE hInstance, float width, float height)
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(
-		L"BTH_D3D_DEMO",
+		wcex.lpszClassName,
 		L"BTH Direct3D Demo",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,

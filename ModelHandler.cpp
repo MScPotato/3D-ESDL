@@ -59,50 +59,62 @@ bool ModelHandler::addSphere(float x, float y, float z, float size, float rx, fl
 	return addModel(x, y, z, size, rx, ry, rz, L"candysun.obj");
 }
 
-void ModelHandler::add9x9Model(float size, float rx, float ry, float rz, std::wstring objName)
+void ModelHandler::add9x9Model(float x, float y, float z, float size, float rx, float ry, float rz, std::wstring objName)
 {
-	addModel(0, 0, 0, size, rx, ry, rz, objName);
-	addModel(1.5, 0, 0, size, rx, ry, rz, objName);
-	addModel(1.5, 1.5, 0, size, rx, ry, rz, objName);
-	addModel(1.5, -1.5, 0, size, rx, ry, rz, objName);
-	addModel(-1.5, 0, 0, size, rx, ry, rz, objName);
-	addModel(-1.5, 1.5, 0, size, rx, ry, rz, objName);
-	addModel(-1.5, -1.5, 0, size, rx, ry, rz, objName);
-	addModel(0, 1.5, 0, size, rx, ry, rz, objName);
-	addModel(0, -1.5, 0, size, rx, ry, rz, objName);
-	addModel(0, 0, 1.5, size, rx, ry, rz, objName);
-	addModel(0, 0, -1.5, size, rx, ry, rz, objName);
-	addModel(0, 1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(0, -1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(1.5, 0, 1.5, size, rx, ry, rz, objName);
-	addModel(1.5, 1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(1.5, -1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, 0, 1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, 1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, -1.5, 1.5, size, rx, ry, rz, objName);
-	addModel(0, 1.5, -1.5, size, rx, ry, rz, objName);
-	addModel(0, -1.5, -1.5, size, rx, ry, rz, objName);
-	addModel(1.5, 0, -1.5, size, rx, ry, rz, objName);
-	addModel(1.5, 1.5, -1.5, size, rx, ry, rz, objName);
-	addModel(1.5, -1.5, -1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, 0, -1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, 1.5, -1.5, size, rx, ry, rz, objName);
-	addModel(-1.5, -1.5, -1.5, size, rx, ry, rz, objName);
+	addModel(0 + x, 0 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 0 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, -1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 0 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, -1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, 1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, -1.5 + y, 0 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, 0 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, 0 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, 1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, -1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 0 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, -1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 0 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, -1.5 + y, 1.5 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, 1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(0 + x, -1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 0 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, 1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(1.5 + x, -1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 0 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, 1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+	addModel(-1.5 + x, -1.5 + y, -1.5 + z, size, rx, ry, rz, objName);
+}
+
+
+void ModelHandler::add9x9Cubes(float x, float y, float z, float size, float rx, float ry, float rz)
+{
+	add9x9Model(x, y, z, size, rx, ry, rz, L"Cube2.obj");
+	
+}
+
+void ModelHandler::add9x9Spheres(float x, float y, float z, float size, float rx, float ry, float rz)
+{
+	add9x9Model(x, y, z, size, rx, ry, rz, L"candysun.obj");
 }
 
 int ModelHandler::LoadScene1() // return nr of obj in the scene
 {
-	addSphere(0, 0, 11.34);
-	addSphere(-4, -0.4, -1, 0.4);
-	addCube(-2.44, -0.5, 1, 1, 27, 33, 6);
-	addCube(2.44, 0, -.5, 1, -27, -33, -6);
-	addCube(4, 0, -2, 1.45, -45, 0, 3);
-	addCube(4, 0, -2, 1.45, -45, 0, 3);
-	addCube(0, -10, 0, 10);
-	addCube(10, 0, 0, 10);
-	addCube(-10, 0, 0, 10);
-	addCube(0, 0, -10, 10);
-	addCube(0, 0, 10, 10);
+	addSphere(0, 10, 11.34);
+	addSphere(-4, -0.4+10, -1, 0.4);
+	addCube(-2.44, -0.5+10, 1, 1, 27, 33, 6);
+	addCube(2.44, 10, -.5, 1, -27, -33, -6);
+	addCube(4, 0, -2+10, 1.45, -45, 0, 3);
+	addCube(4, 0, -2+10, 1.45, -45, 0, 3);
+	addCube(0, -0, 0, 10);
+	addCube(10, 10, 0, 10);
+	addCube(-10, 10, 0, 10);
+	addCube(0, 10, -10, 10);
+	addCube(0, 10, 10, 10);
 	return 11;
 }
 

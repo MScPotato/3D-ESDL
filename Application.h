@@ -3,11 +3,13 @@
 #include "ModelHandler.h"
 #include "LightHandler.h"
 #include "Terrain.h"
+//#include "myGui.h"
 const int NROF_PASSES = 4;
 
 class Application
 {
 private:
+	//ImGuiManager* ImGuiManager;
 	// foundation
 	float width, height;
 	HWND hwnd;
@@ -24,22 +26,7 @@ private:
 	Timer timer;
 	double dt = 0.f;
 
-	// ImGui
-	int ModelsCounter = 0;
-	bool IncrOnSpawn = false;
-	float size = 1;
-	float fx = 0.f;
-	float fy = 0.f;
-	float fz = 0.f;
-	float ax = 0.f;
-	float ay = 0.f;
-	float az = 0.f;
-
-	//fps
-	void CalcFPS(double dt);
-	int fpsCounter = 0;
-	float fpsTimer = 0.f;
-	int fps = 0.f;
+	myGui gui;
 
 private:
 
@@ -104,7 +91,7 @@ public:
 	void Update();
 	void SetViewport();
 	void Render();
-	void ImGuiRender();
+	void RenderImGui();
 	void drawAll();
 	void DepthStencil();
 	void SetSampleState();

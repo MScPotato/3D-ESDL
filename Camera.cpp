@@ -3,7 +3,7 @@
 
 Camera::Camera(float width, float height, HWND wndHandle)
 {
-	this->camPosition = { 0.f, 0.f, -2.f };
+	this->camPosition = { 0.f, 1.f, -2.f };
 	this->DefaultForward = { 0.0f, 0.0f, 1.0f };
 	this->DefaultRight = { 1.0f, 0.0f, 0.0f };
 	this->DefaultUp = { 0.0f, 1.0f, 0.0f };
