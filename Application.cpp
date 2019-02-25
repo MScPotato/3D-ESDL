@@ -597,7 +597,7 @@ void Application::Render()
 
 void Application::RenderImGui()
 {
-	gui.Update(ObjHandler, camera->getPosition());
+	gui.Update(ObjHandler, camera->getPosition(), gDefSRV);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui::Render();

@@ -31,7 +31,8 @@ public:
 	void add9x9Cubes(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0);
 	void add9x9Spheres(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0);
 	int LoadScene1();
-	void addRndBox();
+	XMFLOAT4 addRndBox();
+	XMFLOAT4 addRndSphere();
 
 	int getNrOfModels()const { return models.size(); }
 	Model getModelAt(int pos)const { return models.at(pos); }

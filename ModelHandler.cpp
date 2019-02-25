@@ -118,7 +118,7 @@ int ModelHandler::LoadScene1() // return nr of obj in the scene
 	return 11;
 }
 
-void ModelHandler::addRndBox()
+XMFLOAT4 ModelHandler::addRndBox()
 {
 	srand(time(NULL));
 	float size = Math::RandomInt(1, 3);
@@ -126,7 +126,7 @@ void ModelHandler::addRndBox()
 	float x = Math::RandomInt(-25, 25);
 	float y = Math::RandomInt(-25, 25);
 	float z = Math::RandomInt(0, 25);
-	
+
 	float rx = Math::RandomInt(0, 85);
 	float ry = Math::RandomInt(0, 85);
 	float rz = Math::RandomInt(0, 85);
@@ -147,7 +147,26 @@ void ModelHandler::addRndBox()
 	}
 
 	addModel(size, x, y, z, rx, ry, rz, model);
+	return XMFLOAT4(x, y, z, size);
 }
+
+XMFLOAT4 ModelHandler::addRndSphere()
+{
+	srand(time(NULL));
+	float size = Math::RandomInt(1, 3);
+
+	float x = Math::RandomInt(-25, 25);
+	float y = Math::RandomInt(-25, 25);
+	float z = Math::RandomInt(0, 25);
+	
+	float rx = Math::RandomInt(0, 85);
+	float ry = Math::RandomInt(0, 85);
+	float rz = Math::RandomInt(0, 85);
+
+	addModel(size, x, y, z, rx, ry, rz, L"candysun.obj");
+	return XMFLOAT4(x, y, z, size);
+}
+
 
 void ModelHandler::update()
 {
