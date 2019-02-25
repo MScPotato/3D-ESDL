@@ -16,7 +16,6 @@ private:
 	float ay = 0.f;
 	float az = 0.f;
 	XMFLOAT4 SpawnedAt = { 0,0,0,0 };
-	ImGuiIO& io = ImGui::GetIO();
 
 	//fps
 	int fpsCounter = 0;
