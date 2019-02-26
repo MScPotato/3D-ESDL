@@ -583,10 +583,16 @@ void Application::Render()
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
-	for (int i = 0; i < NROF_PASSES; i++) {
-		if (guiRTV[i])
-			gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
-	}
+	//for (int i = 0; i < NROF_PASSES; i++) {
+	//	if (guiRTV[i])
+	//		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
+	//}
+
+	int k = 0;
+	if (SRV_Toggle[0]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[0]);
+	if (SRV_Toggle[1]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[1]);
+	if (SRV_Toggle[2]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[2]);
+	if (SRV_Toggle[3]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[3]);
 
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
@@ -599,7 +605,7 @@ void Application::Render()
 
 void Application::RenderImGui()
 {
-	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, guiRTV);
+	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, SRV_Toggle);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui::Render();

@@ -24,7 +24,7 @@ void myGui::CalcFPS(double dt)
 	}
 }
 
-void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], bool guiRTV[])
+void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], bool guiSRV[])
 {
 	// --------------------------------------------------------
 	// ImGui
@@ -65,56 +65,55 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 		// Display G buffers
 		if(ImGui::Button("Reset RTVs"))
 			for (int i = 0; i < 4; i++)
-				guiRTV[i] = true;
+				guiSRV[i] = true;
 		ImGui::Text("Normal"); ImGui::SameLine(0, 160); ImGui::Text("Color");
 		if (ImGui::ImageButton((void*)gDefTex[0], ImVec2(192, 108))) {
-			if (guiRTV[0])
+			if (guiSRV[0])
 			{
 				for (int i = 0; i < 4; i++)
-					guiRTV[i] = true;
+					guiSRV[i] = true;
 			}
-			guiRTV[0] = true;
-			guiRTV[1] = false;
-			guiRTV[2] = false;
-			guiRTV[3] = false;
+			guiSRV[0] = true;
+			guiSRV[1] = false;
+			guiSRV[2] = false;
+			guiSRV[3] = false;
 		}
 		ImGui::SameLine();
 		if (ImGui::ImageButton((void*)gDefTex[1], ImVec2(192, 108))) {
-			if (guiRTV[1])
+			if (guiSRV[1])
 			{
 				for (int i = 0; i < 4; i++)
-					guiRTV[i] = true;
+					guiSRV[i] = true;
 			}
-			guiRTV[0] = false;
-			guiRTV[1] = true;
-			guiRTV[2] = false;
-			guiRTV[3] = false;
-			ImGui::Render(gDefTex);
+			guiSRV[0] = false;
+			guiSRV[1] = true;
+			guiSRV[2] = false;
+			guiSRV[3] = false;
 		}
 		ImGui::Text("Position"); ImGui::SameLine(0, 145); ImGui::Text("Light (Not in use)");
 		if (ImGui::ImageButton((void*)gDefTex[2], ImVec2(192, 108))) {
-			if (guiRTV[2])
+			if (guiSRV[2])
 			{
 				for (int i = 0; i < 4; i++)
-					guiRTV[i] = true;
+					guiSRV[i] = true;
 			}
-			guiRTV[0] = false;
-			guiRTV[1] = false;
-			guiRTV[2] = true;
-			guiRTV[3] = false;
+			guiSRV[0] = false;
+			guiSRV[1] = false;
+			guiSRV[2] = true;
+			guiSRV[3] = false;
 		}
 		ImGui::SameLine();
 		if (ImGui::ImageButton((void*)gDefTex[3], ImVec2(192, 108)))
 		{
-			if (guiRTV[3])
+			if (guiSRV[3])
 			{
 				for (int i = 0; i < 4; i++)
-					guiRTV[i] = true;
+					guiSRV[i] = true;
 			}
-			guiRTV[0] = false;
-			guiRTV[1] = false;
-			guiRTV[2] = false;
-			guiRTV[3] = true;
+			guiSRV[0] = false;
+			guiSRV[1] = false;
+			guiSRV[2] = false;
+			guiSRV[3] = true;
 		}
 
 		//if (rtv_Reset)
