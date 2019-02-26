@@ -44,11 +44,6 @@ float4 PS_main(VS_OUT input) : SV_Target
     float3 position = texture2.Sample(Sampler, input.TexCoord).xyz;
     float3 retard = texture3.Sample(Sampler, input.TexCoord).xyz; // till shadowmapping
 
-    if ((normal == NULL) || (normal == NULL) || (normal == NULL) || (normal == NULL))
-    {
-
-    }
-
     if (color.x == 0.2 && color.y == 0.3 && color.z == 0.3)
     {
         return float4(color, 1.0);
