@@ -24,7 +24,7 @@ void myGui::CalcFPS(double dt)
 	}
 }
 
-void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[])
+void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], bool guiRTV[])
 {
 	// --------------------------------------------------------
 	// ImGui
@@ -63,14 +63,66 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 	if (ImGui::CollapsingHeader("Render Data"))
 	{
 		// Display G buffers
-		ImGui::Text("Position"); ImGui::SameLine(0, 145); ImGui::Text("Color");
-		ImGui::Image((void*)gDefTex[0], ImVec2(192, 108));
+		if(ImGui::Button("Reset RTVs"))
+			for (int i = 0; i < 4; i++)
+				guiRTV[i] = true;
+		ImGui::Text("Normal"); ImGui::SameLine(0, 160); ImGui::Text("Color");
+		if (ImGui::ImageButton((void*)gDefTex[0], ImVec2(192, 108))) {
+			if (guiRTV[0])
+			{
+				for (int i = 0; i < 4; i++)
+					guiRTV[i] = true;
+			}
+			guiRTV[0] = true;
+			guiRTV[1] = false;
+			guiRTV[2] = false;
+			guiRTV[3] = false;
+		}
 		ImGui::SameLine();
-		ImGui::Image((void*)gDefTex[1], ImVec2(192, 108));
-		ImGui::Text("Normal"); ImGui::SameLine(0, 155); ImGui::Text("Light (Not in use)");
-		ImGui::Image((void*)gDefTex[2], ImVec2(192, 108));
+		if (ImGui::ImageButton((void*)gDefTex[1], ImVec2(192, 108))) {
+			if (guiRTV[1])
+			{
+				for (int i = 0; i < 4; i++)
+					guiRTV[i] = true;
+			}
+			guiRTV[0] = false;
+			guiRTV[1] = true;
+			guiRTV[2] = false;
+			guiRTV[3] = false;
+			ImGui::Render(gDefTex);
+		}
+		ImGui::Text("Position"); ImGui::SameLine(0, 145); ImGui::Text("Light (Not in use)");
+		if (ImGui::ImageButton((void*)gDefTex[2], ImVec2(192, 108))) {
+			if (guiRTV[2])
+			{
+				for (int i = 0; i < 4; i++)
+					guiRTV[i] = true;
+			}
+			guiRTV[0] = false;
+			guiRTV[1] = false;
+			guiRTV[2] = true;
+			guiRTV[3] = false;
+		}
 		ImGui::SameLine();
-		ImGui::Image((void*)gDefTex[3], ImVec2(192, 108));
+		if (ImGui::ImageButton((void*)gDefTex[3], ImVec2(192, 108)))
+		{
+			if (guiRTV[3])
+			{
+				for (int i = 0; i < 4; i++)
+					guiRTV[i] = true;
+			}
+			guiRTV[0] = false;
+			guiRTV[1] = false;
+			guiRTV[2] = false;
+			guiRTV[3] = true;
+		}
+
+		//if (rtv_Reset)
+		//{
+		//	for (int i = 0; i < 4; i++)
+		//		guiRTV[i] = true;
+		//	rtv_Reset = false;
+		//}
 	}
 	
 	// Spawn Menu
@@ -106,6 +158,7 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 			}
 			else
 				ImGui::Text("Spawned at: %.2s, %.2s, %.2s\nSize: %.1s", cubeX.c_str(), cubeY.c_str(), cubeZ.c_str(), cubeW.c_str());
+			
 			ImGui::Separator();
 			if (ImGui::Button("Scene #1"))
 			{

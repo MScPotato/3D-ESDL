@@ -26,7 +26,7 @@ void GS_main(
 )
 {
     GS_OUT element;
-
+    
     for (uint i = 0; i < 3; i++)
     {
         //if (dot(normalize( /*float3(0, 0, -2)*/camPos - input[i].wPos.xyz), input[i].normal) > -0.2)

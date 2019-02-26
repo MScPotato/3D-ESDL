@@ -22,12 +22,12 @@ private:
 	float fpsTimer = 0.f;
 	int fps = 0.f;
 
-	
+	bool rtv_Reset = false;
 public:
 	myGui();
 	~myGui();
 
 	void CalcFPS(double dt);
-	void Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[]);
+	void Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], bool guiRTV[]);
 };
 

@@ -29,6 +29,7 @@ public:
 	void initTerrain(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext);
 	bool loadHeightmap();
 	void BuildQuadPatchVB();
+	void calcNormal(std::vector<TerrainVertex> &vert);
 	//void BuildQuadPatchSRV();
 	void BuildQuadPatchIB();
 	void draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer);

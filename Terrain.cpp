@@ -7,7 +7,7 @@ Terrain::Terrain()
 	mTerrain.terrainHeight = 500;
 	mTerrain.heightScale = 1;
 	mTerrain.quadSize = 1;
-	mTerrain.filename = L"Textures/terrain_test.raw";
+	mTerrain.filename = L"Textures/terrainEX.raw";
 	heightData.resize(mTerrain.terrainWidth * mTerrain.terrainHeight);
 
 	nrOfRows = (mTerrain.terrainHeight - 1);
@@ -71,19 +71,22 @@ void Terrain::BuildQuadPatchVB()
 
 	for (UINT y = 0; y < nrOfCols; y++)
 	{
-		float z = Width - y * quadWidth;
+		float posZ = Width - y * quadWidth;
 		for (UINT x = 0; x < nrOfRows; x++)
 		{
 			float posX = -Depth + x * quadDepth;
-			float posy = heightData[y*nrOfRows + x];
-			vertices[y*nrOfRows + x].pos = XMFLOAT3(posX, 0.0f, z);
+			float posY = heightData[y*nrOfRows + x];
+			vertices[y*nrOfRows + x].pos = XMFLOAT3(posX, 0.0f, posZ);
 			
 			// stretch texture
 			vertices[y*nrOfRows + x].uv.x = x * du;
 			vertices[y*nrOfRows + x].uv.y = y * dv;
-
+			
+			vertices[y*nrOfRows + x].normal = XMFLOAT3(0, 1, 0);
 		}
 	}
+
+	calcNormal(vertices);
 
 	D3D11_BUFFER_DESC bufferDesc;
 	ZeroMemory(&bufferDesc, sizeof(bufferDesc));
@@ -98,6 +101,43 @@ void Terrain::BuildQuadPatchVB()
 	data.pSysMem = &vertices[0];
 	gDevice->CreateBuffer(&bufferDesc, &data, &vertexBuffer);
 
+}
+
+void Terrain::calcNormal(std::vector<TerrainVertex> &vert)
+{
+	XMVECTOR vec1;
+	XMVECTOR vec2;
+	XMVECTOR vec3;
+	XMVECTOR vec4;
+	XMVECTOR p1;
+	XMVECTOR p2;
+	XMVECTOR p3;
+	XMVECTOR p4;
+	XMVECTOR normal1;
+	XMVECTOR normal2;
+	
+	for (int i = 0; i < nrOfCols-1; i++)
+	{
+		for (int j = 0; j < nrOfRows - 1; j++)
+		{
+			p1 = XMLoadFloat3(&vert[i * nrOfRows + j].pos);
+			p2 = XMLoadFloat3(&vert[i * nrOfRows + j + 1].pos);
+			p3 = XMLoadFloat3(&vert[(i + 1)*nrOfRows + j].pos);
+			p4 = XMLoadFloat3(&vert[(i + 1)*nrOfRows + j + 1].pos);
+
+			vec1 = p2 - p1;
+			vec2 = p3 - p1;
+			vec3 = p2 - p4;
+			vec4 = p3 - p4;
+
+			normal1 = XMVector3Cross(vec1, vec2);
+			normal2 = XMVector3Cross(vec3, vec4);
+			XMStoreFloat3(&vert[i * nrOfRows + j].normal, normal1);
+			XMStoreFloat3(&vert[i * nrOfRows + j + 1].normal, normal1);
+			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j].normal, normal1);
+			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j + 1].normal, normal2);
+		}
+	}
 }
 
 void Terrain::BuildQuadPatchIB()
