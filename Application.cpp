@@ -102,10 +102,10 @@ bool Application::initModels()
 	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
 	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
 
-	lightHandler->addLight(XMFLOAT3(10, 20, -10), XMFLOAT4(1, 1, 1, 1));
-	lightHandler->addLight(XMFLOAT3(-2, 3, 2), XMFLOAT4(1, 0, 0, 3));
+	lightHandler->addLight(XMFLOAT3(7, 25, -5), XMFLOAT4(1, 1, 1, 1));
+	lightHandler->addLight(XMFLOAT3(-5, 3, 3), XMFLOAT4(1, 0, 0, 1));
 	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
-	lightHandler->addLight(XMFLOAT3(2, 2, -2), XMFLOAT4(0, 0, 1, 3));
+	lightHandler->addLight(XMFLOAT3(4, 4, -5), XMFLOAT4(0, 0, 1, 1));
 	//lightHandler->addLight(XMFLOAT3(0, 0, 3), XMFLOAT4(1, 0, 1, 3));
 	//lightHandler->addLight(XMFLOAT3(3, 0, 0), XMFLOAT4(1, 1, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(-3, 0, 0), XMFLOAT4(0, 1, 1, 3));
@@ -114,7 +114,7 @@ bool Application::initModels()
 	lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addSphere();
+	ObjHandler->addSphere(0, 2);
 
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
@@ -583,17 +583,9 @@ void Application::Render()
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
-	//for (int i = 0; i < NROF_PASSES; i++) {
-	//	if (guiRTV[i])
-	//		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
-	//}
-
-	int k = 0;
-	if (SRV_Toggle[0]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[0]);
-	if (SRV_Toggle[1]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[1]);
-	if (SRV_Toggle[2]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[2]);
-	if (SRV_Toggle[3]) gDeviceContext->PSSetShaderResources(k++, 1, &gDefSRV[3]);
-
+	for (int i = 0; i < NROF_PASSES; i++) {
+		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
+	}
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
 
@@ -605,7 +597,7 @@ void Application::Render()
 
 void Application::RenderImGui()
 {
-	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, SRV_Toggle);
+	gui.Update(ObjHandler, camera->getPosition(), gDefSRV);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui::Render();

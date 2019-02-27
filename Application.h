@@ -27,7 +27,7 @@ private:
 	double dt = 0.f;
 
 	myGui gui;
-	bool SRV_Toggle[NROF_PASSES] = { true, true, true, true };
+
 private:
 
 	// objects to instruct the API what to do.

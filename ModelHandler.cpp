@@ -59,6 +59,11 @@ bool ModelHandler::addSphere(float x, float y, float z, float size, float rx, fl
 	return addModel(x, y, z, size, rx, ry, rz, L"candysun.obj");
 }
 
+bool ModelHandler::addTrain(float x, float y, float z, float size, float rx, float ry, float rz)
+{
+	return addModel(x, y, z, size, rx, ry, rz, L"steyerdorf.obj");
+}
+
 void ModelHandler::add9x9Model(float x, float y, float z, float size, float rx, float ry, float rz, std::wstring objName)
 {
 	addModel(0 + x, 0 + y, 0 + z, size, rx, ry, rz, objName);

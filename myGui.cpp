@@ -24,7 +24,7 @@ void myGui::CalcFPS(double dt)
 	}
 }
 
-void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], bool guiSRV[])
+void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[])
 {
 	// --------------------------------------------------------
 	// ImGui
@@ -63,65 +63,14 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 	if (ImGui::CollapsingHeader("Render Data"))
 	{
 		// Display G buffers
-		if(ImGui::Button("Reset RTVs"))
-			for (int i = 0; i < 4; i++)
-				guiSRV[i] = true;
 		ImGui::Text("Normal"); ImGui::SameLine(0, 160); ImGui::Text("Color");
-		if (ImGui::ImageButton((void*)gDefTex[0], ImVec2(192, 108))) {
-			if (guiSRV[0])
-			{
-				for (int i = 0; i < 4; i++)
-					guiSRV[i] = true;
-			}
-			guiSRV[0] = true;
-			guiSRV[1] = false;
-			guiSRV[2] = false;
-			guiSRV[3] = false;
-		}
+		ImGui::Image((void*)gDefTex[0], ImVec2(192, 108));
 		ImGui::SameLine();
-		if (ImGui::ImageButton((void*)gDefTex[1], ImVec2(192, 108))) {
-			if (guiSRV[1])
-			{
-				for (int i = 0; i < 4; i++)
-					guiSRV[i] = true;
-			}
-			guiSRV[0] = false;
-			guiSRV[1] = true;
-			guiSRV[2] = false;
-			guiSRV[3] = false;
-		}
+		ImGui::Image((void*)gDefTex[1], ImVec2(192, 108));
 		ImGui::Text("Position"); ImGui::SameLine(0, 145); ImGui::Text("Light (Not in use)");
-		if (ImGui::ImageButton((void*)gDefTex[2], ImVec2(192, 108))) {
-			if (guiSRV[2])
-			{
-				for (int i = 0; i < 4; i++)
-					guiSRV[i] = true;
-			}
-			guiSRV[0] = false;
-			guiSRV[1] = false;
-			guiSRV[2] = true;
-			guiSRV[3] = false;
-		}
+		ImGui::Image((void*)gDefTex[2], ImVec2(192, 108));
 		ImGui::SameLine();
-		if (ImGui::ImageButton((void*)gDefTex[3], ImVec2(192, 108)))
-		{
-			if (guiSRV[3])
-			{
-				for (int i = 0; i < 4; i++)
-					guiSRV[i] = true;
-			}
-			guiSRV[0] = false;
-			guiSRV[1] = false;
-			guiSRV[2] = false;
-			guiSRV[3] = true;
-		}
-
-		//if (rtv_Reset)
-		//{
-		//	for (int i = 0; i < 4; i++)
-		//		guiRTV[i] = true;
-		//	rtv_Reset = false;
-		//}
+		ImGui::Image((void*)gDefTex[3], ImVec2(192, 108));
 	}
 	
 	// Spawn Menu
@@ -221,6 +170,13 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 			if (IncrOnSpawn) fx += 1.5f * 3;
 			if (DecrOnSpawn) fx -= 1.5f * 3;
 			ModelsCounter += 81;
+		}
+		if (ImGui::Button("Add train (CAUTION)"))
+		{
+			ObjHandler->addTrain(fx, fy, fz, size, ax, ay, az);
+			if (IncrOnSpawn) fx += 1.5f * 3;
+			if (DecrOnSpawn) fx -= 1.5f * 3;
+			ModelsCounter += 1;
 		}
 		if (ImGui::Button("Clear Scene"))
 		{

@@ -16,6 +16,7 @@ private:
 	ID3D11Buffer* vertexBuffer;
 	ID3D11Buffer* indexBuffer;
 	XMFLOAT4X4 modelSpace;
+	ID3D11ShaderResourceView* gTextureSRV;
 private:
 	HeightMap mTerrain;
 	std::vector<float> heightData;
@@ -28,6 +29,7 @@ public:
 	~Terrain();
 	void initTerrain(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext);
 	bool loadHeightmap();
+	void LoadTexture(std::wstring filename);
 	void BuildQuadPatchVB();
 	void calcNormal(std::vector<TerrainVertex> &vert);
 	//void BuildQuadPatchSRV();

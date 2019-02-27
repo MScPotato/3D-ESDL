@@ -26,6 +26,7 @@ public:
 	//bool addModel(std::wstring objName = L"Cube.obj", float x = 0.f, float y = 0.f, float z = 0.f);
 	bool addModel(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0, std::wstring objName = L"Cube.obj");
 	bool addSphere(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0);
+	bool addTrain(float x, float y, float z, float size, float rx, float ry, float rz);
 	bool addCube(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0);
 	void add9x9Model(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0, std::wstring objName = L"Cube2.obj");
 	void add9x9Cubes(float x = 0.f, float y = 0.f, float z = 0.f, float size = 1, float rx = 0, float ry = 0, float rz = 0);
