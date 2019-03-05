@@ -41,7 +41,7 @@ private:
 	float cursorLockPosX, cursorLockPosY;
 
 	//ID3D11Buffer* camBuffer;
-
+	bool flightMode;
 public:
 	Camera(float width, float height, HWND wndHandle);
 	//Init(IDXGISwapChain* gSwapChain, ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext);
@@ -51,7 +51,10 @@ public:
 	void UpdateView();
 	XMFLOAT4X4 getView()const;
 	XMFLOAT3 getPosition()const;
-
+	void setCamPos(XMFLOAT3 newPos);
+	void Walk(float y);
+	bool getFlying()const;
+	void respawn();
 
 	float dotThese(XMFLOAT3 v1, XMFLOAT3 v2);
 };

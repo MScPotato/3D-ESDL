@@ -19,6 +19,7 @@ private:
 	ID3D11ShaderResourceView* gTextureSRV;
 private:
 	HeightMap mTerrain;
+	std::vector<TerrainVertex> vertices;
 	std::vector<float> heightData;
 	int nrOfRows;
 	int nrOfCols;
@@ -34,6 +35,9 @@ public:
 	void calcNormal(std::vector<TerrainVertex> &vert);
 	//void BuildQuadPatchSRV();
 	void BuildQuadPatchIB();
+	float getY(float x, float z)const;
+	float GetWidth()const;
+	float GetDepth()const;
 	void draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer);
 };
 

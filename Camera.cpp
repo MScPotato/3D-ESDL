@@ -3,7 +3,7 @@
 
 Camera::Camera(float width, float height, HWND wndHandle)
 {
-	this->camPosition = { 0.f, 1.f, -2.f };
+	this->camPosition = { 0.f, 4.9f, -2.f };
 	this->DefaultForward = { 0.0f, 0.0f, 1.0f };
 	this->DefaultRight = { 1.0f, 0.0f, 0.0f };
 	this->DefaultUp = { 0.0f, 1.0f, 0.0f };
@@ -31,6 +31,7 @@ Camera::Camera(float width, float height, HWND wndHandle)
 	this->mouseY = window.bottom / 2;
 
 	this->showMouse = 0;
+	this->flightMode = false;
 
 	//this->wndHandle = wndHandle;
 
@@ -51,12 +52,22 @@ Camera::~Camera()
 
 void Camera::UpdateCamera(float dt)
 {
-	if (GetAsyncKeyState(VK_SHIFT) < 0)
+	if (GetAsyncKeyState(VK_SHIFT))
 	{
 		dt *= boost;
 	}
 
-	if (GetAsyncKeyState('W') < 0)
+	if (GetAsyncKeyState('1'))
+	{
+		flightMode = true;
+	}
+	
+	if (GetAsyncKeyState('2'))
+	{
+		flightMode = false;
+	}
+
+	if (GetAsyncKeyState('W'))
 	{
 		camPosition = {
 		camPosition.x + camForward.x * CAMSPEED * dt,
@@ -74,7 +85,7 @@ void Camera::UpdateCamera(float dt)
 		};
 	}
 
-	if (GetAsyncKeyState('D') < 0)
+	if (GetAsyncKeyState('D'))
 	{
 		camPosition = {
 			camPosition.x + camRight.x * CAMSPEED * dt,
@@ -94,11 +105,22 @@ void Camera::UpdateCamera(float dt)
 
 	if (GetAsyncKeyState(VK_SPACE))
 	{
-		camPosition = {
-			camPosition.x + DefaultUp.x * CAMSPEED * dt,
-				camPosition.y + DefaultUp.y * CAMSPEED * dt,
-				camPosition.z + DefaultUp.z * CAMSPEED * dt
-		};
+		if (flightMode)
+		{
+			camPosition = {
+				camPosition.x + DefaultUp.x * CAMSPEED * dt,
+					camPosition.y + DefaultUp.y * CAMSPEED * dt,
+					camPosition.z + DefaultUp.z * CAMSPEED * dt
+			};
+		}
+		else if (!flightMode)
+		{
+			camPosition = {
+				camPosition.x + DefaultUp.x * CAMSPEED * dt,
+					camPosition.y + 2.f,
+					camPosition.z + DefaultUp.z * CAMSPEED * dt
+			};
+		}
 	}
 
 	if (GetAsyncKeyState(VK_LCONTROL))
@@ -162,11 +184,7 @@ void Camera::UpdateCamera(float dt)
 
 	if (GetAsyncKeyState('F'))
 	{
-		this->camPosition = { 0.f, 0.f, -2.f };
-		this->camTarget = { 0.f, 0.f, 1.f };
-		this->camForward = DefaultForward;
-		this->camRight = DefaultRight;
-		this->camUp = DefaultUp;
+		respawn();
 	}
 
 	GetCursorPos(&currMousePos);	
@@ -258,8 +276,32 @@ XMFLOAT3 Camera::getPosition()const
 	return this->camPosition;
 }
 
+void Camera::setCamPos(XMFLOAT3 newPos)
+{
+	this->camPosition = newPos;
+}
+
+void Camera::Walk(float y)
+{
+	if (!flightMode)
+		this->camPosition.y = y;
+}
+
+bool Camera::getFlying()const
+{
+	return flightMode;
+}
+
+void Camera::respawn()
+{
+	this->camPosition = { 0.f, 4.9f, -2.f };
+	this->camTarget = { 0.f, 0.f, 1.f };
+	this->camForward = DefaultForward;
+	this->camRight = DefaultRight;
+	this->camUp = DefaultUp;
+}
+
 float Camera::dotThese(XMFLOAT3 v1, XMFLOAT3 v2)
 {
 	return (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
 }
-

@@ -73,6 +73,8 @@ private:
 	// Camera
 	ID3D11Buffer* camBuffer;
 	void CreateCameraBuffer();
+	// Terrain/Camera 
+	float terrainY = 0.f;
 public:
 	Application(float width, float height, HWND wndHandle);
 	~Application();
@@ -89,6 +91,7 @@ public:
 	HRESULT UpdateCamBuffer();
 	void initiateApplication();
 	void Update();
+	void TerrainWalk();
 	void SetViewport();
 	void Render();
 	void RenderImGui();

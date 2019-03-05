@@ -114,7 +114,7 @@ bool Application::initModels()
 	lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addSphere(0, 2);
+	ObjHandler->addSphere(0, 5);
 
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
@@ -128,13 +128,28 @@ void Application::Update()
 {
 	dt = timer.GetMillisecondsElapse();
 	timer.Restart();
-
 	ObjHandler->update();
+	TerrainWalk();
 	camera->UpdateCamera(dt);
 	gui.CalcFPS(dt);
 }
 
-
+void Application::TerrainWalk()
+{
+	if (!camera->getFlying())
+	{
+		
+		terrainY = wTerrain->getY(camera->getPosition().x, camera->getPosition().z);
+		if (terrainY > 0)
+		{
+			camera->Walk(terrainY);
+		}
+		else
+		{
+			camera->respawn();
+		}
+	}
+}
 
 void Application::CreateDefShaders()
 {

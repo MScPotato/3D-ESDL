@@ -7,7 +7,7 @@ Terrain::Terrain()
 	mTerrain.terrainHeight = 64;
 	mTerrain.heightScale = 24;
 	mTerrain.quadSize = 1;
-	mTerrain.filename = L"Textures/Terrain.raw";
+	mTerrain.filename = L"Textures/Grass_Hmap_8.raw";
 	heightData.resize(mTerrain.terrainWidth * mTerrain.terrainHeight);
 
 	nrOfRows = (mTerrain.terrainHeight);
@@ -17,6 +17,7 @@ Terrain::Terrain()
 	nrOfQuadFaces = (nrOfRows - 1) * (nrOfCols - 1);
 
 	XMStoreFloat4x4(&this->modelSpace, XMMatrixIdentity());
+	vertices.resize(nrOfRows * nrOfCols); // 64 * 64 = 4096
 
 	
 }
@@ -63,26 +64,25 @@ bool Terrain::loadHeightmap()
 
 void Terrain::BuildQuadPatchVB()
 {
-	std::vector<TerrainVertex> vertices(nrOfRows * nrOfCols);
 	
-	float Width = (mTerrain.terrainWidth - 1)*mTerrain.quadSize/2;
-	float Depth = (mTerrain.terrainHeight - 1)*mTerrain.quadSize/2;
+	float Width = (mTerrain.terrainWidth - 1)*mTerrain.quadSize/2;// ((64-1)*1) / 2 = 31,5
+	float Depth = (mTerrain.terrainHeight - 1)*mTerrain.quadSize/2;// ((64-1)*1) / 2 = 31,5
 
-	float quadWidth = (mTerrain.terrainWidth - 1)*mTerrain.quadSize / (nrOfCols - 1);
-	float quadDepth = (mTerrain.terrainWidth - 1)*mTerrain.quadSize / (nrOfRows - 1);
+	float quadWidth = (mTerrain.terrainWidth - 1)*mTerrain.quadSize / (nrOfCols - 1);// ((64-1) * 1) / (64-1) = 1
+	float quadDepth = (mTerrain.terrainHeight - 1)*mTerrain.quadSize / (nrOfRows - 1);// ((64-1) * 1) / (64 -1) = 1
 
 	float du = 1.f / (nrOfCols - 1);
 	float dv = 1.f / (nrOfRows - 1);
 
-	for (UINT y = 0; y < nrOfCols; y++)
+	for (UINT y = 0; y < nrOfCols; y++)// y = max 63
 	{
-		float posZ = Width - y * quadWidth;
-		for (UINT x = 0; x < nrOfRows; x++)
+		float posZ = Width - y * quadWidth;// 31,5 - y * 1 = -31,5
+		for (UINT x = 0; x < nrOfRows; x++)// x = max 63
 		{
-			float posX = -Depth + x * quadDepth;
-			float posY = heightData[y*nrOfRows + x];
+			float posX = -Depth + x * quadDepth; // -31,5 + x * 1 = 31,5
+			float posY = heightData[y*nrOfRows + x];// y * 64 + x = 4096
 
-			vertices[y*nrOfRows + x].pos = XMFLOAT3(posX, posY, posZ);
+			vertices[y*nrOfRows + x].pos = XMFLOAT3(posX, posY, posZ);// 31,5, 24, -31,5
 			
 			// stretch texture
 			vertices[y*nrOfRows + x].uv.x = x * du;
@@ -122,6 +122,8 @@ void Terrain::calcNormal(std::vector<TerrainVertex> &vert)
 	XMVECTOR p4;
 	XMVECTOR normal1;
 	XMVECTOR normal2;
+	XMVECTOR normal3;
+	XMVECTOR normal4;
 	
 	for (int i = 0; i < nrOfCols-1; i++)
 	{
@@ -138,11 +140,13 @@ void Terrain::calcNormal(std::vector<TerrainVertex> &vert)
 			vec4 = p3 - p4;
 
 			normal1 = XMVector3Cross(vec1, vec2);
-			normal2 = XMVector3Cross(vec3, vec4);
+			normal2 = XMVector3Cross(vec1, vec3);
+			normal3 = XMVector3Cross(vec2, vec4);
+			normal4 = XMVector3Cross(vec3, vec4);
 			XMStoreFloat3(&vert[i * nrOfRows + j].normal, normal1);
-			XMStoreFloat3(&vert[i * nrOfRows + j + 1].normal, normal1);
-			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j].normal, normal1);
-			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j + 1].normal, normal2);
+			XMStoreFloat3(&vert[i * nrOfRows + j + 1].normal, normal2);
+			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j].normal, normal3);
+			XMStoreFloat3(&vert[(i + 1)*nrOfRows + j + 1].normal, normal4);
 		}
 	}
 }
@@ -151,17 +155,23 @@ void Terrain::BuildQuadPatchIB()
 {
 	std::vector<UINT> indices(nrOfQuadFaces * 4);
 
+	int test1, test2, test3, test4;
 	int k = 0;
-	for (UINT i = 0; i < nrOfCols - 1; i++) {
-		for (UINT j = 0; j < nrOfRows - 1; j++)
+
+	for (UINT i = 0; i < nrOfCols - 1; i++) { // 63
+		for (UINT j = 0; j < nrOfRows - 1; j++) // 63
 		{
 			//top
-			indices[k] = i * nrOfRows + j;
-			indices[k+1] = i * nrOfRows + j + 1;
+			indices[k] = i * nrOfRows + j; // i * 64 + j = 4030, 0
+			test1 = i * nrOfRows + j;
+			indices[k+1] = i * nrOfRows + j + 1; // i * 64 + j + 1 = 4031, 1
+			test2 = i * nrOfRows + j + 1;
 
 			// bot
-			indices[k+2] = (i + 1)*nrOfRows + j;
-			indices[k+3] = (i + 1)*nrOfRows + j + 1;
+			indices[k+2] = (i + 1)*nrOfRows + j; // (i + 1) * 64 + j = 4094, 64
+			test3 = (i + 1)*nrOfRows + j;
+			indices[k+3] = (i + 1)*nrOfRows + j + 1; // (i + 1) * 64 + j + 1 = 4095, 65
+			test4 = (i + 1)*nrOfRows + j + 1;
 			k += 4;
 		}
 	}
@@ -176,6 +186,60 @@ void Terrain::BuildQuadPatchIB()
 	data.pSysMem = &indices[0];
 	gDevice->CreateBuffer(&bufferDesc, &data, &indexBuffer);
 
+}
+
+float Terrain::getY(float x, float z)const
+{
+	float c = (x + 0.5f*GetWidth()) / mTerrain.quadSize;
+	float d = (z - 0.5f*GetDepth()) / -mTerrain.quadSize;
+	
+	if (c < 0 || d < 0 || d > GetDepth() || c > GetWidth())
+	{
+		return -1;
+	}
+
+	int row = (int)floorf(d);
+	int col = (int)floorf(c);
+
+	float A = heightData[row*mTerrain.terrainWidth + col];
+	float B = heightData[row*mTerrain.terrainWidth + col + 1];
+	float C = heightData[(row + 1)*mTerrain.terrainWidth + col];
+	float D = heightData[(row + 1)*mTerrain.terrainWidth + col + 1];
+
+	float s = c - (float)col;
+	float t = d - (float)row;
+
+	float uy, vy;
+	if (s + t <= 1.f) // triangle 1
+	{
+		uy = B - A;
+		vy = C - A;
+		return A + s * uy + t * vy + 1;
+	}
+	else // tri 2
+	{
+		uy = C - D;
+		vy = B - D;
+		return D + (1.f - s)*uy + (1.f - t)*vy + 1;
+	}
+	/*
+	for(int i = 0; i < nrOfRows; i++)
+		for (int j = 0; j < nrOfCols; j++)
+		{
+			if (vertices[i*nrOfRows + j].pos.x == x && vertices[i*nrOfRows + j].pos.z == z)
+				return vertices[i*nrOfRows + j].pos.y + 1;
+		}*/
+	return -1;
+}
+
+float Terrain::GetWidth()const
+{
+	return (mTerrain.terrainWidth - 1)*mTerrain.quadSize;
+}
+
+float Terrain::GetDepth()const
+{
+	return (mTerrain.terrainHeight - 1)*mTerrain.quadSize;
 }
 
 void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer)
@@ -210,3 +274,12 @@ void Terrain::LoadTexture(std::wstring filename)
 
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV); // innan render
 }
+
+//
+//bool Terrain::InBounds(int i, int j)
+//{
+//	// True if ij are valid indices; false otherwise.
+//	return
+//		i >= 0 && i < (int)mInfo.HeightmapHeight &&
+//		j >= 0 && j < (int)mInfo.HeightmapWidth;
+//}
