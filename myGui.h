@@ -8,9 +8,9 @@ private:
 	int ModelsCounter = 1;
 	bool IncrOnSpawn = false;
 	bool DecrOnSpawn = false;
-	float size = 1;
+	float size = 1.f;
 	float fx = 0.f;
-	float fy = 0.f;
+	float fy = 4.9f;
 	float fz = 0.f;
 	float ax = 0.f;
 	float ay = 0.f;
@@ -20,7 +20,7 @@ private:
 	//fps
 	int fpsCounter = 0;
 	float fpsTimer = 0.f;
-	int fps = 0.f;
+	int fps = 0;
 
 	
 public:

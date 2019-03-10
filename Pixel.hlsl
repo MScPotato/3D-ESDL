@@ -5,15 +5,6 @@ Texture2D texture3 : register(t3); // for shadowmapping
 
 SamplerState Sampler : register (s0);
 
-cbuffer MTL_BUFFER : register(b0)
-{
-	float4 Kd;
-	float4 Ka;
-	float4 Tf;
-	float4 Ks;
-	float4 NiNsIl; //x = Ni, y = Ns, z = illum, w = 1(for now)
-};
-
 cbuffer Camera_Buffer : register(b1)
 {
     float3 camPos;
@@ -40,14 +31,14 @@ float4 PS_main(VS_OUT input) : SV_Target
     float3 normal = texture0.Sample(Sampler, input.TexCoord).xyz;
     float3 color = texture1.Sample(Sampler, input.TexCoord).xyz;
     float3 position = texture2.Sample(Sampler, input.TexCoord).xyz;
-    float3 lightmap = texture3.Sample(Sampler, input.TexCoord).xyz; // till shadowmapping
+    float4 material = texture3.Sample(Sampler, input.TexCoord); // specular
 
     if (color.x == 0.2 && color.y == 0.3 && color.z == 0.3)
     {
         return float4(color, 1.0);
     }
     
-    float3 ambient = Ka.xyz * float3(0.3, 0.3, 0.3);
+    float3 ambient = material.xyz * float3(0.3, 0.3, 0.3);
     float3 finalColor = color * ambient;
     float3 diffuse = { 0, 0, 0 };
     float3 specular = { 0, 0, 0 };
@@ -61,9 +52,9 @@ float4 PS_main(VS_OUT input) : SV_Target
         float3 lightColor = lightRGBA[i].rgb;
         float lightIntensity = lightRGBA[i].a;
 
-        diffuse = color * Kd.xyz * lightColor * lightIntensity * max(dot(normal, vecToLight), 0);
+        diffuse = color * lightColor * lightIntensity * max(dot(normal, vecToLight), 0);
         Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
-        specular = color * lightColor * pow(max(dot(Rm, VecToCam), 0), NiNsIl.y);
+        specular = color * lightColor * pow(max(dot(Rm, VecToCam), 0), material.w);
 
         finalColor += diffuse + specular;
     }

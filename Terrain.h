@@ -17,6 +17,10 @@ private:
 	ID3D11Buffer* indexBuffer;
 	XMFLOAT4X4 modelSpace;
 	ID3D11ShaderResourceView* gTextureSRV;
+
+	MTLBuffer MTLData;
+	ID3D11Buffer* mtlBuffer;
+
 private:
 	HeightMap mTerrain;
 	std::vector<TerrainVertex> vertices;
@@ -39,5 +43,8 @@ public:
 	float GetWidth()const;
 	float GetDepth()const;
 	void draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer);
+
+	void CreateMTLBufferDesc();
+	void setTerrainMTL();
 };
 

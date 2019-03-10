@@ -19,13 +19,16 @@ Terrain::Terrain()
 	XMStoreFloat4x4(&this->modelSpace, XMMatrixIdentity());
 	vertices.resize(nrOfRows * nrOfCols); // 64 * 64 = 4096
 
-	
+	MTLData.Kd = XMFLOAT4(1.f, 1.f, 1.f, 1.f);
+	MTLData.Ka = XMFLOAT3(0.8f, 0.8f, 0.8f);
+	MTLData.Ns = 1.f;
 }
 
 void Terrain::initTerrain(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext)
 {
 	this->gDevice = gDevice;
 	this->gDeviceContext = gDeviceContext;
+	CreateMTLBufferDesc();
 	LoadTexture(L"Textures/Grass_Terrain.png");
 }
 
@@ -275,11 +278,37 @@ void Terrain::LoadTexture(std::wstring filename)
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV); // innan render
 }
 
-//
-//bool Terrain::InBounds(int i, int j)
-//{
-//	// True if ij are valid indices; false otherwise.
-//	return
-//		i >= 0 && i < (int)mInfo.HeightmapHeight &&
-//		j >= 0 && j < (int)mInfo.HeightmapWidth;
-//}
+void Terrain::CreateMTLBufferDesc()
+{
+	D3D11_BUFFER_DESC mtlBufferDesc;
+	ZeroMemory(&mtlBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	mtlBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	mtlBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	mtlBufferDesc.ByteWidth = sizeof(MTLBuffer);
+	mtlBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	mtlBufferDesc.MiscFlags = 0;
+	mtlBufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = &MTLData;
+	data.SysMemPitch = 0;
+	data.SysMemSlicePitch = 0;
+
+	CHECK_HR(gDevice->CreateBuffer(&mtlBufferDesc, &data, &mtlBuffer));
+	gDeviceContext->PSSetConstantBuffers(0, 1, &mtlBuffer);
+}
+
+void Terrain::setTerrainMTL()
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+
+	gDeviceContext->Map(mtlBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+
+	memcpy(mappedResource.pData, &MTLData, sizeof(MTLBuffer));
+
+	gDeviceContext->Unmap(mtlBuffer, 0);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &mtlBuffer);
+
+
+
+}

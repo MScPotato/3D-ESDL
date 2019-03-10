@@ -67,17 +67,22 @@ void Model::updateMTL()
 
 void Model::setMtlData(std::vector<Material> mtlcontent, int pos)
 {
+
 	mtlBufferData.Kd = mtlcontent.at(pos).LightData.Kd;
 	mtlBufferData.Ka = mtlcontent.at(pos).LightData.Ka;
-	mtlBufferData.Tf = mtlcontent.at(pos).LightData.Tf;
-	mtlBufferData.Ks = mtlcontent.at(pos).LightData.Ks;
-	mtlBufferData.NiNsIl = mtlcontent.at(pos).LightData.NiNsIl;
+	mtlBufferData.Ns = mtlcontent.at(pos).LightData.Ns;
 
-	mtlBufferData.Kd.w = 1;
-	mtlBufferData.Ka.w = 1;
-	mtlBufferData.Tf.w = 1;
-	mtlBufferData.Ks.w = 1;
-	mtlBufferData.NiNsIl.w = 1;
+	//mtlBufferData.Kd = mtlcontent.at(pos).LightData.Kd;
+	//mtlBufferData.Ka = mtlcontent.at(pos).LightData.Ka;
+	//mtlBufferData.Tf = mtlcontent.at(pos).LightData.Tf;
+	//mtlBufferData.Ks = mtlcontent.at(pos).LightData.Ks;
+	//mtlBufferData.NiNsIl = mtlcontent.at(pos).LightData.NiNsIl;
+
+	//mtlBufferData.Kd.w = 1;
+	//mtlBufferData.Ka.w = 1;
+	//mtlBufferData.Tf.w = 1;
+	//mtlBufferData.Ks.w = 1;
+	//mtlBufferData.NiNsIl.w = 1;
 }
 
 HRESULT Model::CreateModelData()

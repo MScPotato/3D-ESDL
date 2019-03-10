@@ -32,7 +32,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	camera = new Camera(width, height, wndHandle);
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
 	constBuffData.view = camera->getView();
-	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 50));
+	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 100));
 	 
 	
 	ObjHandler = new ModelHandler();
@@ -102,10 +102,10 @@ bool Application::initModels()
 	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
 	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
 
-	lightHandler->addLight(XMFLOAT3(7, 25, -5), XMFLOAT4(1, 1, 1, 1));
-	lightHandler->addLight(XMFLOAT3(-5, 3, 3), XMFLOAT4(1, 0, 0, 1));
+	lightHandler->addLight(XMFLOAT3(7, 27.5, -5), XMFLOAT4(1, 1, 1, 1));
+	//lightHandler->addLight(XMFLOAT3(-5, 4.9, 3), XMFLOAT4(1, 0, 0, 1));
 	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
-	lightHandler->addLight(XMFLOAT3(4, 4, -5), XMFLOAT4(0, 0, 1, 1));
+	//lightHandler->addLight(XMFLOAT3(4, 5, -5), XMFLOAT4(0, 0, 1, 1));
 	//lightHandler->addLight(XMFLOAT3(0, 0, 3), XMFLOAT4(1, 0, 1, 3));
 	//lightHandler->addLight(XMFLOAT3(3, 0, 0), XMFLOAT4(1, 1, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(-3, 0, 0), XMFLOAT4(0, 1, 1, 3));
@@ -602,6 +602,7 @@ void Application::Render()
 		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
 	}
 	gDeviceContext->IASetInputLayout(gVertexLayout);
+
 	gDeviceContext->Draw(6, 0);
 
 	RenderImGui();
@@ -622,6 +623,7 @@ void Application::RenderImGui()
 
 void Application::drawAll()
 {
+	wTerrain->setTerrainMTL();
 	wTerrain->draw(constBuffData, gConstantBuffer);
 	ObjHandler->draw(constBuffData);
 	lightHandler->draw();

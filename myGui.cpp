@@ -131,7 +131,7 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 		
 		if (ImGui::Button("Reset All"))
 		{
-			size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
+			size = 1.f, fx = 0.f, fy = 4.9f, fz = 0.f, ax = 0.f, ay = 0.f, az = 0.f;
 		}
 
 		ImGui::Separator();
@@ -181,7 +181,7 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 		if (ImGui::Button("Clear Scene"))
 		{
 			ObjHandler->ClearObjects();
-			size = 1, fx = 0, fy = 0, fz = 0, ax = 0, ay = 0, az = 0;
+			size = 1, fx = 0, fy = 4.9, fz = 0, ax = 0, ay = 0, az = 0;
 			SpawnedAt = { 0,0,0,0 };
 			ModelsCounter = 0;
 		}

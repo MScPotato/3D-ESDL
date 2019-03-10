@@ -11,12 +11,16 @@ struct Vertex
 
 struct MTLBuffer
 {
-	//w är just nu alltid 1
-	XMFLOAT4 Kd;
-	XMFLOAT4 Ka;
-	XMFLOAT4 Tf;
-	XMFLOAT4 Ks; //Ka = ambient, Kd = diffuse, Ks = specular, 
-	XMFLOAT4 NiNsIl; //x = Ni, y = Ns, z = illum, w = 1(for now)
+	XMFLOAT4 Kd; // diff
+	XMFLOAT3 Ka; // amb
+	float Ns; // spec
+
+//	//w är just nu alltid 1
+//	XMFLOAT4 Kd;
+//	XMFLOAT4 Ka;
+//	XMFLOAT4 Tf;
+//	XMFLOAT4 Ks; //Ka = ambient, Kd = diffuse, Ks = specular, 
+//	XMFLOAT4 NiNsIl; //x = Ni, y = Ns, z = illum, w = 1(for now)
 };
 
 struct Material

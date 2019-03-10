@@ -31,7 +31,7 @@ Camera::Camera(float width, float height, HWND wndHandle)
 	this->mouseY = window.bottom / 2;
 
 	this->showMouse = 0;
-	this->flightMode = false;
+	this->flightMode = true;
 
 	//this->wndHandle = wndHandle;
 

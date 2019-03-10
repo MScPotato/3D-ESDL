@@ -74,7 +74,7 @@ void ModelLoader::LoadModel(std::wstring filename, Model &model)
 			else if (special == "usemtl")
 			{
 				inputStr >> tmp;
-				useMTL(mtl, tmp, model);
+				CHECK_HR(useMTL(mtl, tmp, model));
 			}
 			else if (special == "f")
 			{
@@ -166,7 +166,7 @@ std::vector<Material> ModelLoader::LoadMTL(std::string filename)
 			}
 			else if (special == "illum")
 			{
-				inputStr >> material.LightData.NiNsIl.z;
+				//inputStr >> material.LightData.NiNsIl.z;
 			}
 			else if (special == "Kd")
 			{
@@ -182,9 +182,9 @@ std::vector<Material> ModelLoader::LoadMTL(std::string filename)
 			}
 			else if (special == "Tf")
 			{
-				inputStr >> material.LightData.Tf.x;
-				inputStr >> material.LightData.Tf.y;
-				inputStr >> material.LightData.Tf.z;
+				//inputStr >> material.LightData.Tf.x;
+				//inputStr >> material.LightData.Tf.y;
+				//inputStr >> material.LightData.Tf.z;
 			}
 			else if (special == "map_Kd")
 			{
@@ -196,17 +196,17 @@ std::vector<Material> ModelLoader::LoadMTL(std::string filename)
 			}
 			else if (special == "Ni")
 			{
-				inputStr >> material.LightData.NiNsIl.x;
+				//inputStr >> material.LightData.NiNsIl.x;
 			}
 			else if (special == "Ks")
 			{
-				inputStr >> material.LightData.Ks.x;
-				inputStr >> material.LightData.Ks.y;
-				inputStr >> material.LightData.Ks.z;
+				//inputStr >> material.LightData.Ks.x;
+				//inputStr >> material.LightData.Ks.y;
+				//inputStr >> material.LightData.Ks.z;
 			}
 			else if (special == "Ns")
 			{
-				inputStr >> material.LightData.NiNsIl.y;
+				inputStr >> material.LightData.Ns;
 			}
 			else
 			{
