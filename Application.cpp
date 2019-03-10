@@ -32,11 +32,11 @@ Application::Application(float width, float height, HWND wndHandle)
 	camera = new Camera(width, height, wndHandle);
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
 	constBuffData.view = camera->getView();
-	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 100));
-	 
+	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 75));
 	
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
+	sunLight = new Light_Dir(XMFLOAT3(0, 4.9, -2));
 	wTerrain = new Terrain();
 }
 
@@ -70,6 +70,8 @@ void Application::initiateApplication()
 	CreateGBuffers();
 	CreateShaders(); //4. Skapa vertex- och pixel-shaders
 	CreateDefShaders();
+	CreateShadowShader();
+	
 
 	//if (FAILED(hr))
 	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Shaders", L"ERROR", MB_OK);
@@ -98,11 +100,12 @@ bool Application::initModels()
 {
 	ObjHandler->Init(gDevice, gDeviceContext, gTextureSRV, gConstantBuffer);
 	lightHandler->Init(gDevice, gDeviceContext);
+	sunLight->InitDirLight(gDevice, gDeviceContext);
 
 	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
 	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
 
-	lightHandler->addLight(XMFLOAT3(7, 27.5, -5), XMFLOAT4(1, 1, 1, 1));
+	//lightHandler->addLight(XMFLOAT3(7, 27.5, -5), XMFLOAT4(1, 1, 1, 1));
 	//lightHandler->addLight(XMFLOAT3(-5, 4.9, 3), XMFLOAT4(1, 0, 0, 1));
 	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(4, 5, -5), XMFLOAT4(0, 0, 1, 1));
@@ -110,11 +113,11 @@ bool Application::initModels()
 	//lightHandler->addLight(XMFLOAT3(3, 0, 0), XMFLOAT4(1, 1, 0, 3));
 	//lightHandler->addLight(XMFLOAT3(-3, 0, 0), XMFLOAT4(0, 1, 1, 3));
 
-	lightHandler->CreateLightPosBuffer();
-	lightHandler->CreateLightRGBABuffer();
+	//lightHandler->CreateLightPosBuffer();
+	//lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addSphere(0, 5);
+	ObjHandler->addSphere(0, 4.9);
 
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
@@ -128,9 +131,16 @@ void Application::Update()
 {
 	dt = timer.GetMillisecondsElapse();
 	timer.Restart();
+
 	ObjHandler->update();
 	TerrainWalk();
 	camera->UpdateCamera(dt);
+
+	UpdateConstBuffer();
+	UpdateCamBuffer();
+
+	sunLight->Update();
+
 	gui.CalcFPS(dt);
 }
 
@@ -149,6 +159,33 @@ void Application::TerrainWalk()
 			camera->respawn();
 		}
 	}
+}
+void Application::CreateShadowShader()
+{
+	// Binary Large OBject (BLOB), for compiled shader, and errors.
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	/** SM Vertex Shader **/
+
+	CHECK_HR(D3DCompileFromFile(
+		L"SMVertex.hlsl",		// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"VS_main",			// entry point
+		"vs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pVS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreateVertexShader(
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
+		&SMVertexShader
+	));
 }
 
 void Application::CreateDefShaders()
@@ -473,39 +510,6 @@ HRESULT Application::CreateConstantbufferDescription()
 	return hr;
 }
 
-void Application::CreateCameraBuffer()
-{
-	D3D11_BUFFER_DESC cbufferDesc;
-	ZeroMemory(&cbufferDesc, sizeof(D3D11_BUFFER_DESC));
-	cbufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbufferDesc.ByteWidth = sizeof(Constantbuffer);
-	cbufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbufferDesc.MiscFlags = 0;
-	cbufferDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &camera->getPosition();
-	data.SysMemPitch = 0;
-	data.SysMemSlicePitch = 0;
-
-	hr = gDevice->CreateBuffer(&cbufferDesc, &data, &camBuffer);
-	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
-	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
-}
-
-void Application::SetViewport() // directx, run once.
-{
-	D3D11_VIEWPORT vp;
-	vp.Width = (float)this->width;
-	vp.Height = (float)this->height;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
-	gDeviceContext->RSSetViewports(1, &vp);
-}
-
 void Application::SetSampleState()
 {
 	// samplestate once, directx
@@ -536,57 +540,57 @@ HRESULT Application::UpdateConstBuffer()
 	return hr;
 }
 
-HRESULT Application::UpdateCamBuffer()
-{
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-	hr = gDeviceContext->Map(camBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
-	memcpy(mappedResource.pData, &camera->getPosition(), sizeof(XMFLOAT4));
-	gDeviceContext->Unmap(camBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
-	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
-	return hr;
-}
-
 void Application::Render()
 {
+	// ------------------------------------------------------------------------
+	// Clear colors and depth buffers
+
 	// clear the back buffer to a deep blue
 	float clearColor[] = { 0.2, 0.3, 0.3, 1 };
-	//float clearColor[] = { 0.0, 0.0, 0.0, 1.0 };
-	// use DeviceContext to talk to the API
+
 	for (int i = 0; i < 4; i++)
 	{
 		gDeviceContext->ClearRenderTargetView(gDefRTV[i], clearColor);
 	}
 	gDeviceContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	UpdateConstBuffer();
-	UpdateCamBuffer();
+	// ------------------------------------------------------------------------
+	// null all shaders
+	gDeviceContext->VSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(nullptr, nullptr, 0);
+
+	// ------------------------------------------------------------------------
+	//** Shadowmapping Rendering **//
+
+	gDeviceContext->IASetInputLayout(gDefVLayout);
+	gDeviceContext->VSSetShader(SMVertexShader, nullptr, 0);
+	gDeviceContext->OMSetRenderTargets(0, nullptr, sunLight->getShadowDSV());
+	drawScene(true);
 
 	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
 
-	gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, depthStencilView); //4 st
+	gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, depthStencilView);
 
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
 	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
 
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gDefVLayout);
-	drawAll();
-	
+	drawScene();
+
 	// ------------------------------------------------------------------------
-	//** Default Rendering **//
+	//** Quad Rendering **//
 	UINT quadSize = sizeof(float) * 5;
 	UINT offset = 0;
 	
-	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 	gDeviceContext->IASetVertexBuffers(0, 1, &gQuadBuffer, &quadSize, &offset);
 
 	float errorColor[] = { 1.0, 0.0, 0.0, 1 };
@@ -601,10 +605,15 @@ void Application::Render()
 	for (int i = 0; i < NROF_PASSES; i++) {
 		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
 	}
-	gDeviceContext->IASetInputLayout(gVertexLayout);
 
+	ID3D11ShaderResourceView* pSRV = sunLight->getShadowSRV();
+	gDeviceContext->PSSetShaderResources(NROF_PASSES, 1, &camDepth_SRV);
+	gDeviceContext->PSSetShaderResources(NROF_PASSES + 1, 1, &pSRV);
+
+	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
 
+	// ------------------------------------------------------------------------
 	RenderImGui();
 
 	// Present the backbuffer / present the finished image quad
@@ -613,7 +622,7 @@ void Application::Render()
 
 void Application::RenderImGui()
 {
-	gui.Update(ObjHandler, camera->getPosition(), gDefSRV);
+	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, camDepth_SRV, sunLight->getShadowSRV());
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui::Render();
@@ -621,12 +630,22 @@ void Application::RenderImGui()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Application::drawAll()
+void Application::drawScene(bool shadow)
 {
-	wTerrain->setTerrainMTL();
-	wTerrain->draw(constBuffData, gConstantBuffer);
-	ObjHandler->draw(constBuffData);
-	lightHandler->draw();
+	if (shadow)
+	{
+		wTerrain->setTerrainMTL();
+		wTerrain->draw(sunLight->getBufferData(), sunLight->getLightBuffer(), shadow);
+		ObjHandler->draw(sunLight->getBufferData(), shadow);
+		//lightHandler->draw();
+	}
+	else
+	{
+		wTerrain->setTerrainMTL();
+		wTerrain->draw(constBuffData, gConstantBuffer, shadow);
+		ObjHandler->draw(constBuffData, shadow);
+		//lightHandler->draw();
+	}
 }
 
 HRESULT Application::CreateDirect3DContext(HWND wndHandle)
@@ -706,7 +725,7 @@ void Application::CreateGBuffers() // Deferred Shading
 
 	for (int i = 0; i < NROF_PASSES; i++)
 	{
-		gDevice->CreateRenderTargetView(gDefTex[i], &rtvDesc, &gDefRTV[i]);
+		CHECK_HR(gDevice->CreateRenderTargetView(gDefTex[i], &rtvDesc, &gDefRTV[i]));
 	}
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -718,31 +737,9 @@ void Application::CreateGBuffers() // Deferred Shading
 
 	for (int i = 0; i < NROF_PASSES; i++)
 	{
-		gDevice->CreateShaderResourceView(gDefTex[i], &srvDesc, &gDefSRV[i]);
+		CHECK_HR(gDevice->CreateShaderResourceView(gDefTex[i], &srvDesc, &gDefSRV[i]));
 	}
 
-}
-
-void Application::DepthStencil()
-{
-	D3D11_TEXTURE2D_DESC depthStencilDesc;
-
-	depthStencilDesc.Width = width;
-	depthStencilDesc.Height = height;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.ArraySize = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthStencilDesc.MiscFlags = 0;
-	depthStencilDesc.CPUAccessFlags = 0;
-
-	gDevice->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
-	gDevice->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
-
-	//gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
 }
 
 void Application::SetupImGui()
@@ -785,27 +782,6 @@ void Application::CreateQuadBuffer()
 		0.f, 1.f
 	};
 
-	//VertexData quadVertex[6] =
-	//{
-	//	-0.5f, 0.5f, 0.f,
-	//	0.f, 0.f,
-
-	//	0.5f, 0.5f, 0.f,
-	//	1.f, 0.f,
-
-	//	0.5f, -0.5f, 0.f,
-	//	1.f, 1.f,
-
-	//	-0.5f, 0.5f, 0.f,
-	//	0.f, 0.f,
-
-	//	0.5f, -0.5f, 0.f,
-	//	1.f, 1.f,
-
-	//	-0.5f, -0.5f, 0.f,
-	//	0.f, 1.f
-	//};
-
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -815,4 +791,98 @@ void Application::CreateQuadBuffer()
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = quadVertex;
 	CHECK_HR(gDevice->CreateBuffer(&bufferDesc, &data, &gQuadBuffer));
+}
+
+
+void Application::DepthStencil()
+{
+	// Texutre2D
+	D3D11_TEXTURE2D_DESC depthTextdesc;
+	ZeroMemory(&depthTextdesc, sizeof(depthTextdesc));
+	depthTextdesc.Width = width;
+	depthTextdesc.Height = height;
+	depthTextdesc.MipLevels = 1;
+	depthTextdesc.ArraySize = 1;
+	depthTextdesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	depthTextdesc.SampleDesc.Count = 1;
+	depthTextdesc.SampleDesc.Quality = 0;
+	depthTextdesc.Usage = D3D11_USAGE_DEFAULT;
+	depthTextdesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	depthTextdesc.MiscFlags = 0;
+	depthTextdesc.CPUAccessFlags = 0;
+
+	CHECK_HR(gDevice->CreateTexture2D(&depthTextdesc, NULL, &depthStencilBuffer));
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilDesc;
+	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+	CHECK_HR(gDevice->CreateDepthStencilView(depthStencilBuffer, &depthStencilDesc, &depthStencilView));
+
+	// Render Target View
+	//D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	//ZeroMemory(&rtvDesc, sizeof(rtvDesc));
+	//rtvDesc.Format = depthStencilDesc.Format;
+	//rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	//rtvDesc.Texture2D.MipSlice = 0;
+
+	//CHECK_HR(gDevice->CreateRenderTargetView(shadowBuffer, &rtvDesc, &shadowRTV));
+
+	// Shader Reasource View
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+
+	CHECK_HR(gDevice->CreateShaderResourceView(depthStencilBuffer, &srvDesc, &camDepth_SRV));
+}
+
+
+HRESULT Application::UpdateCamBuffer()
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	ZeroMemory(&mappedResource, sizeof(mappedResource));
+	hr = gDeviceContext->Map(camBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
+	memcpy(mappedResource.pData, &camera->getPosition(), sizeof(XMFLOAT4));
+	gDeviceContext->Unmap(camBuffer, 0);
+	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
+	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
+	return hr;
+}
+
+void Application::CreateCameraBuffer()
+{
+	D3D11_BUFFER_DESC cbufferDesc;
+	ZeroMemory(&cbufferDesc, sizeof(D3D11_BUFFER_DESC));
+	cbufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbufferDesc.ByteWidth = sizeof(Constantbuffer);
+	cbufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbufferDesc.MiscFlags = 0;
+	cbufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = &camera->getPosition();
+	data.SysMemPitch = 0;
+	data.SysMemSlicePitch = 0;
+
+	hr = gDevice->CreateBuffer(&cbufferDesc, &data, &camBuffer);
+	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);
+	gDeviceContext->PSSetConstantBuffers(1, 1, &camBuffer);
+}
+
+void Application::SetViewport() // directx, run once.
+{
+	D3D11_VIEWPORT vp;
+	vp.Width = (float)this->width;
+	vp.Height = (float)this->height;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	gDeviceContext->RSSetViewports(1, &vp);
 }

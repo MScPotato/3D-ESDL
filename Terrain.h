@@ -42,7 +42,7 @@ public:
 	float getY(float x, float z)const;
 	float GetWidth()const;
 	float GetDepth()const;
-	void draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer);
+	void draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer, bool shadow);
 
 	void CreateMTLBufferDesc();
 	void setTerrainMTL();

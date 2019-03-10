@@ -41,6 +41,6 @@ public:
 	HRESULT UpdateWorldConstBuffer(int pos, Constantbuffer &constBuffData);
 	
 	void update();
-	void draw(Constantbuffer &constBuffData);
+	void draw(Constantbuffer &constBuffData, bool shadow);
 };
 

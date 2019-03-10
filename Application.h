@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "ModelHandler.h"
+#include "Light_Dir.h"
 #include "LightHandler.h"
 #include "Terrain.h"
 //#include "myGui.h"
@@ -20,6 +21,7 @@ private:
 	Camera* camera;
 	Terrain* wTerrain;
 	ModelHandler* ObjHandler;
+	Light_Dir* sunLight;
 	LightHandler* lightHandler;
 
 	// time
@@ -63,6 +65,12 @@ private:
 	ID3D11PixelShader* gDefPS;
 
 	//---------------------------------------
+	//---------- Shadow Rendering -----------
+	//---------------------------------------
+	
+	ID3D11VertexShader* SMVertexShader;
+
+	//---------------------------------------
 
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11Texture2D* depthStencilBuffer;
@@ -72,7 +80,7 @@ private:
 
 	// Camera
 	ID3D11Buffer* camBuffer;
-	void CreateCameraBuffer();
+	ID3D11ShaderResourceView* camDepth_SRV;
 	// Terrain/Camera 
 	float terrainY = 0.f;
 public:
@@ -82,24 +90,27 @@ public:
 	void initTerrain();
 	bool initModels();
 	//HRESULT CreateDeferredShaders();
+	void CreateShadowShader();
 	void CreateDefShaders();
 	void CreateGBuffers(); // Deferred Tex, RTV, SRV
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
 	HRESULT CreateConstantbufferDescription();
 	HRESULT UpdateConstBuffer();
-	HRESULT UpdateCamBuffer();
 	void initiateApplication();
 	void Update();
 	void TerrainWalk();
-	void SetViewport();
 	void Render();
 	void RenderImGui();
-	void drawAll();
-	void DepthStencil();
+	void drawScene(bool shadow = false);
 	void SetSampleState();
 	void SetupImGui();
 
 	void CreateQuadBuffer(); // Finished frame quad
+	void DepthStencil();
+	HRESULT UpdateCamBuffer();
+	void CreateCameraBuffer();
+	void SetViewport();
+
 };
 

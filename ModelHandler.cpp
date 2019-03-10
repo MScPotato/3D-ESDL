@@ -178,7 +178,7 @@ void ModelHandler::update()
 
 }
 
-void ModelHandler::draw(Constantbuffer &constBuffData)
+void ModelHandler::draw(Constantbuffer &constBuffData, bool shadow)
 {
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	for (int i = 0; i < models.size(); i++)
@@ -186,8 +186,11 @@ void ModelHandler::draw(Constantbuffer &constBuffData)
 		UpdateWorldConstBuffer(i, constBuffData);
 		models.at(i).updateMTL();
 		models.at(i).setVertexBuffer();
-		gTextureSRV = models.at(i).getTexture();
-		gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV);
+		if (!shadow)
+		{
+			gTextureSRV = models.at(i).getTexture();
+			gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV);
+		}
 		gDeviceContext->Draw(models.at(i).getMesh().size(), 0);
 	}
 }

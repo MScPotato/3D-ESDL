@@ -31,6 +31,9 @@
     <Filter Include="Resource Files\DeferredShaders">
       <UniqueIdentifier>{3057dea2-b135-4ecb-adb9-90ec91822317}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\ShadowShaders">
+      <UniqueIdentifier>{e25953d0-ccd2-4c9e-af1e-8388fd27cc97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -93,6 +96,9 @@
     <ClCompile Include="myGui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Light_Dir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Pixel.hlsl">
@@ -109,6 +115,9 @@
     </FxCompile>
     <FxCompile Include="DefVertex.hlsl">
       <Filter>Resource Files\DeferredShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SMVertex.hlsl">
+      <Filter>Resource Files\ShadowShaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +194,9 @@
       <Filter>Header Files\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="myGui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Light_Dir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

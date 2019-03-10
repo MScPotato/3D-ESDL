@@ -245,7 +245,7 @@ float Terrain::GetDepth()const
 	return (mTerrain.terrainHeight - 1)*mTerrain.quadSize;
 }
 
-void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer)
+void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer, bool shadow)
 {
 	UINT stride = sizeof(TerrainVertex);
 	UINT offset = 0;
@@ -261,8 +261,10 @@ void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer)
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP/*D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST*/);
 	gDeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	gDeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT/*DXGI_FORMAT_R16_UINT*/, 0);
+	
+	if (!shadow)
+		gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV); // set texure every frame
 
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV); // set texure every frame
 	gDeviceContext->DrawIndexed(nrOfQuadFaces * 4, 0, 0);
 }
 
