@@ -9,19 +9,18 @@ Light_Dir::Light_Dir(XMFLOAT3 pos, XMFLOAT3 target, float width, float height)
 
 	shadowView = nullptr;
 	shadowBuffer = nullptr;
-	//shadowRTV = nullptr;
+	shadowRTV = nullptr;
 	shadowSRV = nullptr;
 	lightPosition = pos;
 	lightTarget = target;
 
-	XMStoreFloat4x4(&lightView,
-		XMMatrixLookAtLH(
-			{ pos.x, pos.y, pos.z },
-			{ target.x,target.y,target.z },
-			{ 0, 1, 0 }));
+	XMStoreFloat4x4(&lightView, XMMatrixLookAtLH(
+			{ lightPosition.x, lightPosition.y, lightPosition.z },
+			{ lightTarget.x,lightTarget.y,lightTarget.z },
+			{ 0.f, 1.f, 0.f }));
 
-	bufferData.view = lightView;
 	XMStoreFloat4x4(&bufferData.world, XMMatrixIdentity());
+	bufferData.view = lightView;
 	XMStoreFloat4x4(&bufferData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 75));
 }
 
@@ -54,12 +53,12 @@ void Light_Dir::CreateCameraBuffer()
 	cbufferDesc.StructureByteStride = 0;
 
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &this->lightPosition;
+	data.pSysMem = &lightPosition;
 	data.SysMemPitch = 0;
 	data.SysMemSlicePitch = 0;
 
 	CHECK_HR(gDevice->CreateBuffer(&cbufferDesc, &data, &lightCamBuffer));
-	gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
+	//gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
 	gDeviceContext->PSSetConstantBuffers(4, 1, &lightCamBuffer);
 }
 
@@ -69,9 +68,8 @@ void Light_Dir::Update()
 	ZeroMemory(&mappedResource, sizeof(mappedResource));
 	CHECK_HR(gDeviceContext->Map(lightCamBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
 	memcpy(mappedResource.pData, &lightPosition, sizeof(XMFLOAT4));
-	bufferData.view = lightView;
 	gDeviceContext->Unmap(lightCamBuffer, 0);
-	gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
+	//gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
 	gDeviceContext->PSSetConstantBuffers(4, 1, &lightCamBuffer);
 }
 
@@ -114,7 +112,7 @@ void Light_Dir::DepthStencil()
 
 	CHECK_HR(gDevice->CreateDepthStencilView(shadowBuffer, &dsvDesc, &shadowView));
 
-	// Render Target View
+	//Render Target View
 	//D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
 	//ZeroMemory(&rtvDesc, sizeof(rtvDesc));
 	//rtvDesc.Format = depthStencilDesc.Format;

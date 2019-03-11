@@ -9,7 +9,7 @@ private:
 
 	ID3D11Texture2D* shadowBuffer;
 	ID3D11DepthStencilView* shadowView;
-	//ID3D11RenderTargetView* shadowRTV;
+	ID3D11RenderTargetView* shadowRTV;
 	ID3D11ShaderResourceView* shadowSRV;
 
 	ID3D11Buffer* lightCamBuffer;
@@ -30,7 +30,7 @@ public:
 	void DepthStencil();
 
 	ID3D11DepthStencilView* getShadowDSV() { return this->shadowView; }
-	//ID3D11RenderTargetView* getShadowRTV() { return this->shadowRTV; }
+	ID3D11RenderTargetView* getShadowRTV() { return this->shadowRTV; }
 	ID3D11ShaderResourceView* getShadowSRV()const { return this->shadowSRV; }
 	ID3D11Buffer* getLightBuffer() { return this->lightCamBuffer; }
 	Constantbuffer getBufferData() { return this->bufferData; }

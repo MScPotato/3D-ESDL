@@ -69,6 +69,7 @@ private:
 	//---------------------------------------
 	
 	ID3D11VertexShader* SMVertexShader;
+	ID3D11PixelShader* SMPixelShader;
 
 	//---------------------------------------
 
@@ -96,7 +97,7 @@ public:
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
 	HRESULT CreateConstantbufferDescription();
-	HRESULT UpdateConstBuffer();
+	HRESULT UpdateConstBuffer(XMFLOAT4X4 view);
 	void initiateApplication();
 	void Update();
 	void TerrainWalk();

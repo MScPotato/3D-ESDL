@@ -36,7 +36,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
-	sunLight = new Light_Dir(XMFLOAT3(0, 4.9, -2));
+	sunLight = new Light_Dir(XMFLOAT3(0.f, 4.9f, -2.f), XMFLOAT3(0.f, 4.9f, -1.f), width, height);
 	wTerrain = new Terrain();
 }
 
@@ -136,7 +136,7 @@ void Application::Update()
 	TerrainWalk();
 	camera->UpdateCamera(dt);
 
-	UpdateConstBuffer();
+	//UpdateConstBuffer();
 	UpdateCamBuffer();
 
 	sunLight->Update();
@@ -186,6 +186,28 @@ void Application::CreateShadowShader()
 		nullptr,
 		&SMVertexShader
 	));
+
+	/** SM Pixel Shader **/
+	ID3DBlob* pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+	CHECK_HR(D3DCompileFromFile(
+		L"SMPixel.hlsl",		// filename
+		nullptr,				// optional macros
+		nullptr,				// optional include files
+		"PS_main",				// entry point
+		"ps_5_0",				// shader model (target)
+		D3DCOMPILE_DEBUG,		// shader compile options
+		0,						// effect compile options
+		&pPS,					// double pointer to ID3DBlob		
+		&errorBlob				// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreatePixelShader(
+		pPS->GetBufferPointer(),
+		pPS->GetBufferSize(),
+		nullptr, &SMPixelShader));
+	pPS->Release();
 }
 
 void Application::CreateDefShaders()
@@ -527,12 +549,12 @@ void Application::SetSampleState()
 	gDeviceContext->PSSetSamplers(0, 1, &gSampleStateWrap);
 }
 
-HRESULT Application::UpdateConstBuffer()
+HRESULT Application::UpdateConstBuffer(XMFLOAT4X4 view)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	hr = gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	constBuffData.view = camera->getView();
+	constBuffData.view = view;
 	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
 	memcpy(mappedResource.pData, &constBuffData, sizeof(Constantbuffer));
 	gDeviceContext->Unmap(gConstantBuffer, 0);
@@ -553,6 +575,7 @@ void Application::Render()
 		gDeviceContext->ClearRenderTargetView(gDefRTV[i], clearColor);
 	}
 	gDeviceContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	gDeviceContext->ClearDepthStencilView(sunLight->getShadowDSV(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// ------------------------------------------------------------------------
 	// null all shaders
@@ -565,10 +588,24 @@ void Application::Render()
 	// ------------------------------------------------------------------------
 	//** Shadowmapping Rendering **//
 
+	//deff
+	//ID3D11RenderTargetView* ShadowRenderTargetView = sunLight->getShadowRTV();
+	//ID3D11DepthStencilView* ShadowStencilView = sunLight->getShadowDSV();
+	//gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, sunLight->getShadowDSV());
+	//gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
+	//gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
+	//gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
+	//gDeviceContext->IASetInputLayout(gDefVLayout);
+	//drawScene();
+
+	// shadow
 	gDeviceContext->IASetInputLayout(gDefVLayout);
 	gDeviceContext->VSSetShader(SMVertexShader, nullptr, 0);
+	gDeviceContext->PSSetShader(SMPixelShader, nullptr, 0);
 	gDeviceContext->OMSetRenderTargets(0, nullptr, sunLight->getShadowDSV());
-	drawScene(true);
+	UpdateConstBuffer(sunLight->getBufferData().view);
+	drawScene();
+	
 
 	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
@@ -583,6 +620,8 @@ void Application::Render()
 
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gDefVLayout);
+	//SetViewport();
+	UpdateConstBuffer(camera->getView());
 	drawScene();
 
 	// ------------------------------------------------------------------------
@@ -607,6 +646,7 @@ void Application::Render()
 	}
 
 	ID3D11ShaderResourceView* pSRV = sunLight->getShadowSRV();
+
 	gDeviceContext->PSSetShaderResources(NROF_PASSES, 1, &camDepth_SRV);
 	gDeviceContext->PSSetShaderResources(NROF_PASSES + 1, 1, &pSRV);
 

@@ -119,6 +119,9 @@
     <FxCompile Include="SMVertex.hlsl">
       <Filter>Resource Files\ShadowShaders</Filter>
     </FxCompile>
+    <FxCompile Include="SMPixel.hlsl">
+      <Filter>Resource Files\ShadowShaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">

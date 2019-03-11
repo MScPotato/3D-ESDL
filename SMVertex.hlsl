@@ -1,4 +1,4 @@
-cbuffer SunMatrix : register(b1)
+cbuffer SunMatrix : register(b0)
 {
     float4x4 world;
     float4x4 view;
