@@ -5,7 +5,8 @@ Texture2D texture3 : register(t3); // material
 Texture2D texture4 : register(t4); // shadowmap camera
 Texture2D texture5 : register(t5); // shadowmap sun
 
-SamplerState Sampler : register (s0);
+SamplerState SamplerWrap : register (s0);
+SamplerState SamplerClamp : register(s1);
 
 cbuffer Camera_Buffer : register(b1)
 {
@@ -35,18 +36,17 @@ struct VS_OUT
 
 float4 PS_main(VS_OUT input) : SV_Target
 {
-    float3 normal = texture0.Sample(Sampler, input.TexCoord).xyz;
-    float3 color = texture1.Sample(Sampler, input.TexCoord).xyz;
-    float4 position = texture2.Sample(Sampler, input.TexCoord);
-    float4 material = texture3.Sample(Sampler, input.TexCoord); // specular
-    float camera = texture4.Sample(Sampler, input.TexCoord).x; // shadowmap cam
-    float shadow = texture5.Sample(Sampler, input.TexCoord).x; // shadowmap sun
+    float3 normal = texture0.Sample(SamplerWrap, input.TexCoord).xyz;
+    float3 color = texture1.Sample(SamplerWrap, input.TexCoord).xyz;
+    float4 position = texture2.Sample(SamplerWrap, input.TexCoord);
+    float4 material = texture3.Sample(SamplerWrap, input.TexCoord); // specular
+    float4 camera = texture4.Sample(SamplerWrap, input.TexCoord); // shadowmap cam
 
     if (color.x == 0.2 && color.y == 0.3 && color.z == 0.3)
     {
         return float4(color, 1.0);
     }
-    
+
     float3 ambient = material.xyz /* * 0.5*/;
     float3 finalColor = color * ambient;
     float3 diffuse = { 0, 0, 0 };
@@ -55,54 +55,37 @@ float4 PS_main(VS_OUT input) : SV_Target
     
     float3 VecToCam = normalize(camPos.xyz - position.xyz);
 
-    for (int i = 0; i < 1; i++)
+    float3 lightColor = { 1.f, 0.f, 0.f };
+
+    float2 projCoords;
+    projCoords.x = (camera.x / camera.w) * 0.5f + 0.5f;
+    projCoords.y = (-camera.y / camera.w) * 0.5f + 0.5f;
+
+    if (saturate(projCoords.x) == projCoords.x && saturate(projCoords.y) == projCoords.y)
     {
-        float3 vecToLight = shadowPos - position.xyz;
+        float shadow = texture5.Sample(SamplerClamp, projCoords).x; // shadowmap sun
 
-        float lenghtToLight = length(vecToLight);
-        float3 lightColor = { 1.f, 1.f, 1.f };
-        float lightIntensity = 1;
-        lenghtToLight = lenghtToLight;//fixa
-        //if (lenghtToLight <= shadow)
-        //{
-        
-        //    lightIntensity = 1;
+        float lightDV = camera.z / camera.w;
+        lightDV -= 0.1f;
 
-        //}
-        //else
-        //{
-        //    lightIntensity = 0;
+        if (lightDV < shadow)
+        {
+            float3 vecToLight = normalize(shadowPos - position.xyz);
+            float lightIntensity = 0.f;
 
-        //}
-        //diffuse = color * lightColor * lightIntensity * max(dot(normal, vecToLight), 0);
-        //Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
-        //specular = color * lightColor * pow(max(dot(Rm, VecToCam), 0), material.w);
+            if (dot(normalize(normal), normalize(vecToLight)) > 0)
+            {
+                lightIntensity = 1.f;
+            }
 
-        //finalColor += diffuse + specular;
+            diffuse = color * lightColor * lightIntensity;// * max(dot(normal, vecToLight), 0);
+            //Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
+            //specular = color * pow(max(dot(Rm, VecToCam), 0), material.w);
+
+            finalColor += diffuse + specular;
+        }
     }
-
-    //float3 vecToLight;
-    //float3 VecToCam = normalize(camPos.xyz - position.xyz);
-    //float3 Ia = { 0, 0, 0 };
-    //float3 lightColor;
-    //float lightIntensity;
-    //float3 diffuse;
-    //float3 ambient = Ka.xyz * Ia;
-    //float3 specular = { 0, 0, 0 };
-    //float3 finalColor = color * Ia;
-    //float3 Rm;
-    //for (int i = 0; i < 6; i++)
-    //{
-    //    vecToLight = normalize(lightPos[i].xyz - position.xyz);
-    //    lightColor = lightRGBA[i].rgb;
-    //    lightIntensity = lightRGBA[i].a;
-    //    diffuse = color * Kd.xyz * lightColor * lightIntensity * max(dot(normal, vecToLight), 0);
-    //    Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
-    //    specular = color * lightColor * pow(max(dot(Rm, VecToCam), 0), NiNsIl.y);
-    //    finalColor += diffuse + specular;
-    //}
-
-    //return float4(finalColor, 1.0);
+       
     return float4(finalColor, 1.f);
 };
   

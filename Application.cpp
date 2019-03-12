@@ -36,7 +36,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
-	sunLight = new Light_Dir(XMFLOAT3(0.f, 4.9f, -2.f), XMFLOAT3(0.f, 4.9f, -1.f), width, height);
+	sunLight = new Light_Dir(XMFLOAT3(0.f, 6.9f, 0.f));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
 	wTerrain = new Terrain();
 }
 
@@ -118,7 +118,8 @@ bool Application::initModels()
 
 	//test för olika texture
 	ObjHandler->addSphere(0, 4.9);
-
+	//ObjHandler->addSphere();
+	ObjHandler->addCube();
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
 	//ObjHandler->addModel(0, 0, 0, 1, 0, 0, 0, L"steyerdorf.obj");
@@ -547,6 +548,13 @@ void Application::SetSampleState()
 
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSampleStateWrap);
 	gDeviceContext->PSSetSamplers(0, 1, &gSampleStateWrap);
+
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+	hr = gDevice->CreateSamplerState(&sampDesc, &gSampleStateClamp);
+	gDeviceContext->PSSetSamplers(1, 1, &gSampleStateClamp);
 }
 
 HRESULT Application::UpdateConstBuffer(XMFLOAT4X4 view)
