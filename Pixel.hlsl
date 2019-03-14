@@ -112,32 +112,36 @@ float4 PS_main(VS_OUT input) : SV_Target
     return float4(finalColor, 1.f);
 
     
-    //float3 VecPosToLight = input.Pos.xyz - shadowPos;
-    //float3 VecLightposToLight = input.LightPos.xyz - shadowPos;
-    //float LenghtVecPosLight = length(VecPosToLight);
-    //float LenghtVecLightposLight = length(VecLightposToLight);
-    //float2 projCoords;
-    //projCoords.x = (camera.x / camera.w) * 0.5f + 0.5f;
-    //projCoords.y = (-camera.y / camera.w) * 0.5f + 0.5f;
-    //if (saturate(projCoords.x) == projCoords.x && saturate(projCoords.y) == projCoords.y)
-    //    float shadow = texture5.Sample(SamplerClamp, projCoords).x; // shadowmap sun
-    //float lightDV = camera.z / camera.w;
-    //lightDV -= 0.1f;
-    //if (lightDV < shadow)
-    //    float lightIntensity = 0.f;
-    //if (dot(normalize(normal), normalize(vecToLight)) > 0)
-    //{
-    //    lightIntensity = 1.f;
-    //}
-    //Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
-    //return float4(shadow, shadow, shadow, 1.f); //a shadow check
-    ////For debugging
+    //float3 normal = texture0.Sample(Sampler, input.TexCoord).xyz;
+    //float3 color = texture1.Sample(Sampler, input.TexCoord).xyz;
+    //float3 position = texture2.Sample(Sampler, input.TexCoord).xyz;
+    //float4 material = texture3.Sample(Sampler, input.TexCoord); // specular
 
-    //if (shadow == 0.99f)
+    //if (color.x == 0.2 && color.y == 0.3 && color.z == 0.3)
     //{
-    //    return float4(1.0f, 0.0f, 0.0f, 1.f);
+    //    return float4(color, 1.0);
     //}
-    //return float4(shadowMap.x, 0.f, 0.f, 1.f);
+    
+    //float3 ambient = material.xyz * float3(0.3, 0.3, 0.3);
+    //float3 finalColor = color * ambient;
+    //float3 diffuse = { 0, 0, 0 };
+    //float3 specular = { 0, 0, 0 };
+    //float3 Rm;
+    
+    //float3 VecToCam = normalize(camPos.xyz - position.xyz);
+
+    //for (int i = 0; i < 6; i++)
+    //{
+    //    float3 vecToLight = normalize(lightPos[i].xyz - position.xyz);
+    //    float3 lightColor = lightRGBA[i].rgb;
+    //    float lightIntensity = lightRGBA[i].a;
+
+    //    diffuse = color * lightColor * lightIntensity * max(dot(normal, vecToLight), 0);
+    //    Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
+    //    specular = color * lightColor * pow(max(dot(Rm, VecToCam), 0), material.w);
+
+    //    finalColor += diffuse + specular;
+    //}
 };
 
   
