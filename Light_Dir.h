@@ -1,9 +1,10 @@
 #pragma once
 class Light_Dir
 {
-	Constantbuffer bufferData;
 
 private:
+	ConstantLightbuffer lightBufferData;
+
 	ID3D11Device* gDevice;
 	ID3D11DeviceContext* gDeviceContext;
 
@@ -12,8 +13,9 @@ private:
 	ID3D11RenderTargetView* shadowRTV;
 	ID3D11ShaderResourceView* shadowSRV;
 
-	ID3D11Buffer* lightCamBuffer;
-	void CreateCameraBuffer();
+	ID3D11Buffer* lightPosBuffer;
+	ID3D11Buffer* lightBuffer;
+	void CreateLightBuffers();
 private:
 	XMFLOAT3 lightPosition;
 	XMFLOAT3 lightTarget;
@@ -25,6 +27,7 @@ public:
 	void InitDirLight(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext);
 	~Light_Dir();	
 	
+	void UpdateLightData();
 	void Update();
 	void SetViewport();
 	void DepthStencil();
@@ -32,7 +35,8 @@ public:
 	ID3D11DepthStencilView* getShadowDSV() { return this->shadowView; }
 	ID3D11RenderTargetView* getShadowRTV() { return this->shadowRTV; }
 	ID3D11ShaderResourceView* getShadowSRV()const { return this->shadowSRV; }
-	ID3D11Buffer* getLightBuffer() { return this->lightCamBuffer; }
-	Constantbuffer getBufferData() { return this->bufferData; }
+	ID3D11Buffer* getLightPosBuffer() { return this->lightPosBuffer; }
+	ID3D11Buffer* getLightBuffer() { return this->lightBuffer; }
+	ConstantLightbuffer getBufferData() { return this->lightBufferData; }
 };
 

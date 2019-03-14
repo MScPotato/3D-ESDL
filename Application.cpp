@@ -33,10 +33,11 @@ Application::Application(float width, float height, HWND wndHandle)
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
 	constBuffData.view = camera->getView();
 	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 75));
+	//XMStoreFloat4x4(&constBuffData.projection, XMMatrixOrthographicLH(this->width, this->height, 1.f, 2.5f));
 	
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
-	sunLight = new Light_Dir(XMFLOAT3(0.f, 6.9f, 0.f));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
+	sunLight = new Light_Dir(XMFLOAT3(lightX, lightY, lightZ));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
 	wTerrain = new Terrain();
 }
 
@@ -118,7 +119,7 @@ bool Application::initModels()
 
 	//test för olika texture
 	ObjHandler->addSphere(0, 4.9);
-	//ObjHandler->addSphere();
+	ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
 	ObjHandler->addCube();
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
@@ -557,18 +558,20 @@ void Application::SetSampleState()
 	gDeviceContext->PSSetSamplers(1, 1, &gSampleStateClamp);
 }
 
-HRESULT Application::UpdateConstBuffer(XMFLOAT4X4 view)
+HRESULT Application::UpdateCameraView()
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	hr = gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	constBuffData.view = view;
+	constBuffData.view = camera->getView();
 	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
 	memcpy(mappedResource.pData, &constBuffData, sizeof(Constantbuffer));
 	gDeviceContext->Unmap(gConstantBuffer, 0);
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 	return hr;
 }
+
+
 
 void Application::Render()
 {
@@ -611,9 +614,8 @@ void Application::Render()
 	gDeviceContext->VSSetShader(SMVertexShader, nullptr, 0);
 	gDeviceContext->PSSetShader(SMPixelShader, nullptr, 0);
 	gDeviceContext->OMSetRenderTargets(0, nullptr, sunLight->getShadowDSV());
-	UpdateConstBuffer(sunLight->getBufferData().view);
-	drawScene();
-	
+	sunLight->UpdateLightData();
+	drawScene();	
 
 	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
@@ -629,7 +631,7 @@ void Application::Render()
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gDefVLayout);
 	//SetViewport();
-	UpdateConstBuffer(camera->getView());
+	UpdateCameraView();
 	drawScene();
 
 	// ------------------------------------------------------------------------
@@ -680,20 +682,10 @@ void Application::RenderImGui()
 
 void Application::drawScene(bool shadow)
 {
-	if (shadow)
-	{
-		wTerrain->setTerrainMTL();
-		wTerrain->draw(sunLight->getBufferData(), sunLight->getLightBuffer(), shadow);
-		ObjHandler->draw(sunLight->getBufferData(), shadow);
-		//lightHandler->draw();
-	}
-	else
-	{
 		wTerrain->setTerrainMTL();
 		wTerrain->draw(constBuffData, gConstantBuffer, shadow);
 		ObjHandler->draw(constBuffData, shadow);
 		//lightHandler->draw();
-	}
 }
 
 HRESULT Application::CreateDirect3DContext(HWND wndHandle)

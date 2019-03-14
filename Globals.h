@@ -36,6 +36,13 @@ struct Constantbuffer
 	XMFLOAT4X4 projection;
 };
 
+struct ConstantLightbuffer
+{
+	//XMFLOAT4X4 world;
+	XMFLOAT4X4 lightView;
+	XMFLOAT4X4 lightProjection;
+};
+
 struct LightData
 {
 	XMFLOAT4 position; // w = 1

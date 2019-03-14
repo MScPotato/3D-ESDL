@@ -7,6 +7,10 @@
 //#include "myGui.h"
 const int NROF_PASSES = 4;
 
+const float lightX = 0.f;
+const float lightY = 35.f;
+const float lightZ = 0.f;
+
 class Application
 {
 private:
@@ -98,7 +102,8 @@ public:
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
 	HRESULT CreateConstantbufferDescription();
-	HRESULT UpdateConstBuffer(XMFLOAT4X4 view);
+	HRESULT UpdateCameraView();
+	//HRESULT UpdateLightView();
 	void initiateApplication();
 	void Update();
 	void TerrainWalk();

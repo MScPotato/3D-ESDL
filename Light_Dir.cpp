@@ -19,9 +19,10 @@ Light_Dir::Light_Dir(XMFLOAT3 pos, XMFLOAT3 target, float width, float height)
 			{ lightTarget.x,lightTarget.y,lightTarget.z },
 			{ 0.f, 1.f, 0.f }));
 
-	XMStoreFloat4x4(&bufferData.world, XMMatrixIdentity());
-	bufferData.view = lightView;
-	XMStoreFloat4x4(&bufferData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 75));
+	//XMStoreFloat4x4(&bufferData.world, XMMatrixIdentity());
+	lightBufferData.lightView = lightView;
+	XMStoreFloat4x4(&lightBufferData.lightProjection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1f, 75.0f));
+	//XMStoreFloat4x4(&lightBufferData.lightProjection, XMMatrixOrthographicLH(this->width, this->height, 1.f, 75.f));
 }
 
 void Light_Dir::InitDirLight(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext)
@@ -30,7 +31,7 @@ void Light_Dir::InitDirLight(ID3D11Device* gDevice, ID3D11DeviceContext* gDevice
 	this->gDeviceContext = gDeviceContext;
 
 	DepthStencil();
-	CreateCameraBuffer();
+	CreateLightBuffers();
 	SetViewport();
 }
 
@@ -39,38 +40,72 @@ Light_Dir::~Light_Dir()
 {
 }
 
-
-
-void Light_Dir::CreateCameraBuffer()
+void Light_Dir::CreateLightBuffers()
 {
+	// ---------------------------------------------------------------------
+	// Light Position Data
+
+	D3D11_BUFFER_DESC posBufferDesc;
+	ZeroMemory(&posBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	posBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	posBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	posBufferDesc.ByteWidth = sizeof(XMFLOAT4X4);
+	posBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	posBufferDesc.MiscFlags = 0;
+	posBufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA PosData;
+	PosData.pSysMem = &lightPosition;
+	PosData.SysMemPitch = 0;
+	PosData.SysMemSlicePitch = 0;
+
+	CHECK_HR(gDevice->CreateBuffer(&posBufferDesc, &PosData, &lightPosBuffer));
+	gDeviceContext->PSSetConstantBuffers(4, 1, &lightPosBuffer);
+
+	// ---------------------------------------------------------------------
+	// Constant Buffer Data
+
 	D3D11_BUFFER_DESC cbufferDesc;
 	ZeroMemory(&cbufferDesc, sizeof(D3D11_BUFFER_DESC));
 	cbufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbufferDesc.ByteWidth = sizeof(Constantbuffer);
+	cbufferDesc.ByteWidth = sizeof(ConstantLightbuffer);
 	cbufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	cbufferDesc.MiscFlags = 0;
 	cbufferDesc.StructureByteStride = 0;
 
-	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &lightPosition;
-	data.SysMemPitch = 0;
-	data.SysMemSlicePitch = 0;
+	D3D11_SUBRESOURCE_DATA constData;
+	constData.pSysMem = &lightBufferData;
+	constData.SysMemPitch = 0;
+	constData.SysMemSlicePitch = 0;
 
-	CHECK_HR(gDevice->CreateBuffer(&cbufferDesc, &data, &lightCamBuffer));
-	//gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
-	gDeviceContext->PSSetConstantBuffers(4, 1, &lightCamBuffer);
+	CHECK_HR(gDevice->CreateBuffer(&cbufferDesc, &constData, &lightBuffer));
+	gDeviceContext->VSSetConstantBuffers(1, 1, &lightBuffer);
+	gDeviceContext->PSSetConstantBuffers(5, 1, &lightBuffer);
+
+}
+
+void Light_Dir::UpdateLightData()
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	CHECK_HR(gDeviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
+	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
+	memcpy(mappedResource.pData, &lightBufferData, sizeof(ConstantLightbuffer));
+	gDeviceContext->Unmap(lightBuffer, 0);
+	gDeviceContext->VSSetConstantBuffers(1, 1, &lightBuffer);
+	gDeviceContext->PSSetConstantBuffers(5, 1, &lightBuffer);
 }
 
 void Light_Dir::Update()
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	ZeroMemory(&mappedResource, sizeof(mappedResource));
-	CHECK_HR(gDeviceContext->Map(lightCamBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
+	CHECK_HR(gDeviceContext->Map(lightPosBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
 	memcpy(mappedResource.pData, &lightPosition, sizeof(XMFLOAT4));
-	gDeviceContext->Unmap(lightCamBuffer, 0);
+	gDeviceContext->Unmap(lightPosBuffer, 0);
 	//gDeviceContext->VSSetConstantBuffers(1, 1, &lightCamBuffer);
-	gDeviceContext->PSSetConstantBuffers(4, 1, &lightCamBuffer);
+	gDeviceContext->PSSetConstantBuffers(4, 1, &lightPosBuffer);
 }
 
 void Light_Dir::SetViewport() // directx, run once.

@@ -1,8 +1,14 @@
-cbuffer SunMatrix : register(b0)
+cbuffer cameracont: register(b0)
 {
     float4x4 world;
     float4x4 view;
     float4x4 projection;
+};
+
+cbuffer lightconst : register(b1)
+{
+    float4x4 lightView;
+    float4x4 lightProjection;
 };
 
 struct VS_IN
@@ -23,8 +29,8 @@ VS_OUT VS_main(VS_IN input)
     	
     output.Pos = float4(input.Pos, 1);
     output.Pos = mul(world, output.Pos);
-    output.Pos = mul(view, output.Pos);
-    output.Pos = mul(projection, output.Pos);
+    output.Pos = mul(lightView, output.Pos);
+    output.Pos = mul(lightProjection, output.Pos);
 
     return output;
 }

@@ -247,9 +247,6 @@ float Terrain::GetDepth()const
 
 void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer, bool shadow)
 {
-	UINT stride = sizeof(TerrainVertex);
-	UINT offset = 0;
-
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	CHECK_HR(gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
@@ -257,6 +254,9 @@ void Terrain::draw(Constantbuffer &constBuffData, ID3D11Buffer* gConstantBuffer,
 	memcpy(mappedResource.pData, &constBuffData, sizeof(Constantbuffer));
 	gDeviceContext->Unmap(gConstantBuffer, 0);
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	
+	UINT stride = sizeof(TerrainVertex);
+	UINT offset = 0;
 
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP/*D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST*/);
 	gDeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);

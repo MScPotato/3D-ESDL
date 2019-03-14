@@ -68,12 +68,12 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 		ImGui::SameLine();
 		ImGui::Image((void*)gDefTex[1], ImVec2(192, 108));
 
-		ImGui::Text("Position"); ImGui::SameLine(0, 145); ImGui::Text("Material");
+		ImGui::Text("Position"); ImGui::SameLine(0, 146); ImGui::Text("Material");
 		ImGui::Image((void*)gDefTex[2], ImVec2(192, 108));
 		ImGui::SameLine();
 		ImGui::Image((void*)gDefTex[3], ImVec2(192, 108));
 
-		ImGui::Text("CAM Depth"); ImGui::SameLine(0, 145); ImGui::Text("SUN Depth");
+		ImGui::Text("CAM Depth"); ImGui::SameLine(0, 140); ImGui::Text("SUN Depth");
 		ImGui::Image((void*)CAMdepthView, ImVec2(192, 108));
 		ImGui::SameLine();
 		ImGui::Image((void*)SMdepthView, ImVec2(192, 108));
