@@ -120,7 +120,7 @@ bool Application::initModels()
 	//test för olika texture
 	ObjHandler->addSphere(0, 4.9);
 	ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
-	ObjHandler->addCube();
+	//ObjHandler->addCube();
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
 	//ObjHandler->addModel(0, 0, 0, 1, 0, 0, 0, L"steyerdorf.obj");

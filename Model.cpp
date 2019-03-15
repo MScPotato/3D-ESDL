@@ -129,6 +129,7 @@ void Model::setModelSpace(float x, float y, float z)
 	modelSpace._41 = x;
 	modelSpace._42 = y;
 	modelSpace._43 = z;
+	worldCoords = XMFLOAT3(x, y, z);
 }
 
 XMFLOAT4X4 Model::getModelSpace()const

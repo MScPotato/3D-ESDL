@@ -15,6 +15,7 @@ private:
 	ID3D11Buffer* mtlBuffer;
 
 	XMFLOAT4X4 modelSpace;
+	XMFLOAT3 worldCoords;
 
 public:
 	Model(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext, ID3D11ShaderResourceView* gTextureSRV);
@@ -25,6 +26,7 @@ public:
 
 	void setModelSpace(float x, float y, float z);
 	XMFLOAT4X4 getModelSpace()const;
+	XMFLOAT3 getWorldCoords()const { return worldCoords; }
 
 	void setModelScaling(float size);
 	//void setRotation(float angle, bool x, bool y, bool z);
