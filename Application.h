@@ -1,9 +1,10 @@
 #pragma once
 #include "Camera.h"
-#include "ModelHandler.h"
+//#include "ModelHandler.h"
 #include "Light_Dir.h"
 #include "LightHandler.h"
 #include "Terrain.h"
+#include "Quadtree.h"
 //#include "myGui.h"
 const int NROF_PASSES = 4;
 
@@ -27,6 +28,7 @@ private:
 	ModelHandler* ObjHandler;
 	Light_Dir* sunLight;
 	LightHandler* lightHandler;
+	Quadtree* quadTree;
 
 	// time
 	Timer timer;

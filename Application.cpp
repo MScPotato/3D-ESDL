@@ -39,6 +39,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	lightHandler = new LightHandler();
 	sunLight = new Light_Dir(XMFLOAT3(lightX, lightY, lightZ));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
 	wTerrain = new Terrain();
+	quadTree = new Quadtree();
 }
 
 Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
@@ -118,13 +119,16 @@ bool Application::initModels()
 	//lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addSphere(0, 4.9);
-	ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
+	ObjHandler->addSphere(1.f, 4.9f, 1.f);
+	ObjHandler->addCube(-5.f, 4.9f, 1.f);
+	//ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
 	//ObjHandler->addCube();
 	//3x trains
 	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
 	//ObjHandler->addModel(0, 0, 0, 1, 0, 0, 0, L"steyerdorf.obj");
 	//ObjHandler->addModel(constBuffData.world, 5, 0, -1, 1, 0, -90, 0, L"steyerdorf.obj");
+
+	quadTree->InitTree(gDeviceContext, gTextureSRV, gConstantBuffer, ObjHandler, 64);
 
 	return true;
 }
@@ -684,7 +688,8 @@ void Application::drawScene(bool shadow)
 {
 		wTerrain->setTerrainMTL();
 		wTerrain->draw(constBuffData, gConstantBuffer, shadow);
-		ObjHandler->draw(constBuffData, shadow);
+		quadTree->render(0, constBuffData, shadow);
+		//ObjHandler->draw(constBuffData, shadow);
 		//lightHandler->draw();
 }
 
