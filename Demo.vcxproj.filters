@@ -34,6 +34,12 @@
     <Filter Include="Resource Files\ShadowShaders">
       <UniqueIdentifier>{e25953d0-ccd2-4c9e-af1e-8388fd27cc97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\TerrainShaders">
+      <UniqueIdentifier>{ed3ac548-1cca-4b67-b3ee-f25880fe9131}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\ParticleShaders">
+      <UniqueIdentifier>{874480d7-dad6-4b42-876b-9a14d0d10971}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -102,6 +108,9 @@
     <ClCompile Include="Quadtree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Frustum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Pixel.hlsl">
@@ -124,6 +133,24 @@
     </FxCompile>
     <FxCompile Include="SMPixel.hlsl">
       <Filter>Resource Files\ShadowShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TerrainPixel.hlsl">
+      <Filter>Resource Files\TerrainShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TerrainGeometry.hlsl">
+      <Filter>Resource Files\TerrainShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleCompute.hlsl">
+      <Filter>Resource Files\ParticleShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleVertex.hlsl">
+      <Filter>Resource Files\ParticleShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleGeometry.hlsl">
+      <Filter>Resource Files\ParticleShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlePixel.hlsl">
+      <Filter>Resource Files\ParticleShaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,6 +233,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Quadtree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

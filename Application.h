@@ -29,13 +29,14 @@ private:
 	Light_Dir* sunLight;
 	LightHandler* lightHandler;
 	Quadtree* quadTree;
+	Frustum* camFrustum;
 
 	// time
 	Timer timer;
 	double dt = 0.f;
 
 	myGui gui;
-
+	bool topView = false;
 private:
 
 	// objects to instruct the API what to do.
@@ -78,6 +79,24 @@ private:
 	ID3D11PixelShader* SMPixelShader;
 
 	//---------------------------------------
+	//---------- Terrain Rendering -----------
+	//---------------------------------------
+
+	//ID3D11VertexShader* terrainVertexShader; // deferred vertexsh
+	ID3D11GeometryShader* terrainGeometryShader;
+	ID3D11PixelShader* terrainPixelShader;
+
+	//---------------------------------------
+	//---------- Particles Rendering -----------
+	//---------------------------------------
+
+	ID3D11VertexShader* particleVertex;
+	ID3D11GeometryShader* particleGeometry;
+	ID3D11PixelShader* particlePixel;
+	ID3D11ComputeShader* particlesCompute;
+	ID3D11InputLayout* particleInputLayout;
+
+	//---------------------------------------
 
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11Texture2D* depthStencilBuffer;
@@ -99,7 +118,10 @@ public:
 	bool initModels();
 	//HRESULT CreateDeferredShaders();
 	void CreateShadowShader();
+	void CreateTerrainShaders();
 	void CreateDefShaders();
+	void CreateParticleShaders();
+	void CreateParticleComputeShader();
 	void CreateGBuffers(); // Deferred Tex, RTV, SRV
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);

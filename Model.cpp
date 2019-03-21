@@ -26,9 +26,19 @@ void Model::setTexture(ID3D11ShaderResourceView* TextureSRV)
 	gTextureSRV = TextureSRV;
 }
 
+void Model::setNormalMap(ID3D11ShaderResourceView* NormalSRV)
+{
+	gNormalSRV = NormalSRV;
+}
+
 ID3D11ShaderResourceView* Model::getTexture()const
 {
 	return gTextureSRV;
+}
+
+ID3D11ShaderResourceView* Model::getNormalMap()const
+{
+	return gNormalSRV;
 }
 
 HRESULT Model::CreateMTLBufferDesc()

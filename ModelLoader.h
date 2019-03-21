@@ -18,5 +18,6 @@ public:
 	void LoadModel(std::wstring filename, Model &model);
 	std::vector<Material> LoadMTL(std::string filename);
 	void LoadTexture(std::wstring filename);
+	void LoadNormalMap(std::wstring filename);
 	HRESULT useMTL(std::vector<Material> mtlcontent, std::string name, Model &model);
 };

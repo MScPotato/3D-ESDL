@@ -11,8 +11,10 @@ private:
 	ID3D11Device* gDevice; 
 	ID3D11DeviceContext* gDeviceContext;
 	ID3D11ShaderResourceView* gTextureSRV;
+	ID3D11ShaderResourceView* gNormalSRV;
 	MTLBuffer mtlBufferData;
 	ID3D11Buffer* mtlBuffer;
+	ID3D11Buffer* normalmapBuffer;
 
 	XMFLOAT4X4 modelSpace;
 	XMFLOAT3 worldCoords;
@@ -36,7 +38,9 @@ public:
 	std::vector<Vertex> getMesh();
 
 	void setTexture(ID3D11ShaderResourceView* TextureSRV);
+	void setNormalMap(ID3D11ShaderResourceView* NormalSRV);
 	ID3D11ShaderResourceView* getTexture()const;
+	ID3D11ShaderResourceView* getNormalMap()const;
 
 	void setMtlData(std::vector<Material> mtlcontent, int pos);
 	HRESULT CreateMTLBufferDesc();

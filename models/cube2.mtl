@@ -1,10 +1,10 @@
 newmtl cube2_OBJ_blinn1SG6
 illum 4
-Kd 0.80 0.80 0.80
-Ka 0.20 0.20 0.20
+Kd 1.00 1.00 1.00
+Ka 0.80 0.80 0.80
 Tf 1.00 1.00 1.00
-map_Kd crate_1.jpg
-map_Ka crate_1.jpg
+map_Kd crate_NM_COLOR.png
+map_Nor crate_NM_NRM.png
 Ni 1.00
 Ks 0.28 0.28 0.28
 Ns 10.00

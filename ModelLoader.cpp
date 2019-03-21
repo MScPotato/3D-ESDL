@@ -69,7 +69,6 @@ void ModelLoader::LoadModel(std::wstring filename, Model &model)
 			else if (special == "s")
 			{
 				continue;
-				//ignore for now
 			}
 			else if (special == "usemtl")
 			{
@@ -144,7 +143,6 @@ std::vector<Material> ModelLoader::LoadMTL(std::string filename)
 	std::vector<Material> allMats;
 
 	std::string filepath = "models/" + filename;
-	//std::string filepath = "models/train/" + filename;
 	std::ifstream targetFile;
 	std::string line, special, tmp;
 
@@ -190,9 +188,9 @@ std::vector<Material> ModelLoader::LoadMTL(std::string filename)
 			{
 				inputStr >> material.map_Kd;
 			}
-			else if (special == "map_Ka")
+			else if (special == "map_Nor")
 			{
-				inputStr >> material.map_Ka;
+				inputStr >> material.map_Nor;
 			}
 			else if (special == "Ni")
 			{
@@ -235,8 +233,11 @@ HRESULT ModelLoader::useMTL(std::vector<Material> mtlcontent, std::string name, 
 	std::wstring filePath = L"Textures/" + filename;
 	//std::wstring filePath = L"models/greenhouse/" + filename;
 	LoadTexture(filePath);
-	
 	model.setTexture(gTextureSRV);
+	filename = StringToWide(mtlcontent.at(pos).map_Nor);
+	filePath = L"Textures/" + filename;
+	LoadNormalMap(filePath);
+	model.setNormalMap(gTextureSRV);
 	model.setMtlData(mtlcontent, pos);
 	//mtlBufferData.Kd = mtlcontent.at(pos).LightData.Kd;
 	//mtlBufferData.Ka = mtlcontent.at(pos).LightData.Ka;
@@ -258,7 +259,6 @@ HRESULT ModelLoader::useMTL(std::vector<Material> mtlcontent, std::string name, 
 //flyttas till model
 void ModelLoader::LoadTexture(std::wstring filename)
 {
-
 	hr = CreateWICTextureFromFile(gDevice, (const wchar_t*)filename.c_str(), nullptr, &gTextureSRV);
 	if (FAILED(hr))
 	{
@@ -268,6 +268,20 @@ void ModelLoader::LoadTexture(std::wstring filename)
 	
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV); // innan render
 	//return hr;
+}
+
+void ModelLoader::LoadNormalMap(std::wstring filename)
+{
+	// overwrites current texture in gTextureSRV
+	hr = CreateWICTextureFromFile(gDevice, (const wchar_t*)filename.c_str(), nullptr, &gTextureSRV);
+	if (FAILED(hr))
+	{
+		hr = CreateWICTextureFromFile(gDevice, L"Textures/Default.jpg", nullptr, &gTextureSRV);
+		MessageBox(NULL, L"Loading Normalmap texture Failed!", L"ERROR", MB_OK);
+	}
+
+	gDeviceContext->PSSetShaderResources(1, 1, &gTextureSRV); // innan render
+
 }
 
 std::wstring ModelLoader::StringToWide(std::string s)

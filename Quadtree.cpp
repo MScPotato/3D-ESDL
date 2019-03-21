@@ -93,7 +93,8 @@ void Quadtree::CreateTreeNode(ModelHandler* objHandler, Node* node, float posX, 
 	}
 
 	//Case 3: If this node is not empty and the obj count is less then max
-	node->objInQuad = &objHandler->getModelAt(node->objIndex[0]);//inte säker på att detta kommer funka
+	Model* temp = new Model(objHandler->getModelAt(node->objIndex[0]));
+	node->objInQuad = temp;//inte säker på att detta kommer funka
 	//vi behöver id för obj för att vet vilken som ska renderas i varje quad
 	
 }
@@ -138,21 +139,21 @@ bool Quadtree::isObjContained(Model Obj, float posX, float posZ, float width)
 	return true;
 }
 
-void Quadtree::render(float x, Constantbuffer &constBuffData, bool shadow)
+void Quadtree::render(Frustum* fov, Constantbuffer &constBuffData, bool shadow)
 {
 	drawCount = 0;
 
-	renderNode(rootNode, x, constBuffData, shadow);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	renderNode(rootNode, fov, constBuffData, shadow);
 }
 
-void Quadtree::renderNode(Node* node, float x, Constantbuffer &constBuffData, bool shadow)
+void Quadtree::renderNode(Node* node, Frustum* fov, Constantbuffer &constBuffData, bool shadow)
 {
-	bool result = false;
+	bool result;
 	int count = 0;
 
-	if (node->positionX > x) //x placeholders el något sånt
-		result = true;
-
+	result = fov->CheckCube(node->positionX, 4.9f, node->positionZ, node->width / 2.f);
+	
 	if (!result)
 		return;
 
@@ -161,7 +162,7 @@ void Quadtree::renderNode(Node* node, float x, Constantbuffer &constBuffData, bo
 		if (node->nodeChild[i] != nullptr)
 		{
 			count++;
-			renderNode(node->nodeChild[i], x, constBuffData, shadow);
+			renderNode(node->nodeChild[i], fov, constBuffData, shadow);
 		}
 	}
 
@@ -180,7 +181,9 @@ void Quadtree::renderNode(Node* node, float x, Constantbuffer &constBuffData, bo
 	if (!shadow)
 	{
 		gTextureSRV = node->objInQuad->getTexture();
-		gDeviceContext->PSGetShaderResources(0, 1, &gTextureSRV);
+		gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV);
+		gTextureSRV = node->objInQuad->getNormalMap();
+		gDeviceContext->PSSetShaderResources(1, 1, &gTextureSRV);
 	}
 	drawCount++;
 	gDeviceContext->Draw(node->objInQuad->getMesh().size(), 0);

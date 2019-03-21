@@ -38,5 +38,6 @@ public:
 	ID3D11Buffer* getLightPosBuffer() { return this->lightPosBuffer; }
 	ID3D11Buffer* getLightBuffer() { return this->lightBuffer; }
 	ConstantLightbuffer getBufferData() { return this->lightBufferData; }
+	XMFLOAT4X4 getView()const { return this->lightView; }
 };
 

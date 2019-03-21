@@ -1,5 +1,6 @@
 #pragma once
 #include "ModelHandler.h"
+#include "Frustum.h"
 
 class Quadtree
 {
@@ -28,7 +29,7 @@ public:
 	int countObj(ModelHandler* objHandler, Node* node, float posX, float posZ, float width);
 	bool isObjContained(Model Obj, float posX, float posZ, float width);
 
-	void render(float x, Constantbuffer &constBuffData, bool shadow);
-	void renderNode(Node* node, float x, Constantbuffer &constBuffData, bool shadow);
+	void render(Frustum* fov, Constantbuffer &constBuffData, bool shadow);
+	void renderNode(Node* node, Frustum* fov, Constantbuffer &constBuffData, bool shadow);
 };
 

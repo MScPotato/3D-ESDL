@@ -26,7 +26,7 @@ struct MTLBuffer
 struct Material
 {
 	MTLBuffer LightData;
-	std::string map_Kd, map_Ka, name; //map_Kd = Diffuse tex map(more or less alltid samma som map_Ka), map_Ka = ambient tex map, name = namn för just denna delen
+	std::string map_Kd, map_Nor, name; //map_Kd = Diffuse tex map(more or less alltid samma som map_Ka), map_Ka = ambient tex map, name = namn för just denna delen
 };
 
 struct Constantbuffer

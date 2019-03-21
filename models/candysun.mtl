@@ -13,4 +13,5 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
-map_Kd leather.jpg
+map_Kd leather_COLOR.png
+map_Nor leather_NRM.png

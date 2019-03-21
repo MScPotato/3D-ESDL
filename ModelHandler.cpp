@@ -39,6 +39,7 @@ bool ModelHandler::addModel(float x, float y, float z, float size, float rx, flo
 	temp.setModelSpace(x, y, z);
 	loader->LoadModel(objName, temp);
 	hr = temp.CreateModelData();
+
 	if (SUCCEEDED(hr))
 	{
 		DirectX::XMFLOAT4X4 test = temp.getModelSpace();
@@ -51,7 +52,7 @@ bool ModelHandler::addModel(float x, float y, float z, float size, float rx, flo
 
 bool ModelHandler::addCube(float x, float y, float z, float size, float rx, float ry, float rz)
 {
-	return addModel(x, y, z, size, rx, ry, rz, L"Cube.obj");
+	return addModel(x, y, z, size, rx, ry, rz, L"Cube2.obj");
 }
 
 bool ModelHandler::addSphere(float x, float y, float z, float size, float rx, float ry, float rz)
@@ -190,6 +191,8 @@ void ModelHandler::draw(Constantbuffer &constBuffData, bool shadow)
 		{
 			gTextureSRV = models.at(i).getTexture();
 			gDeviceContext->PSSetShaderResources(0, 1, &gTextureSRV);
+			gTextureSRV = models.at(i).getNormalMap();
+			gDeviceContext->PSSetShaderResources(1, 1, &gTextureSRV);
 		}
 		gDeviceContext->Draw(models.at(i).getMesh().size(), 0);
 	}

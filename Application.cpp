@@ -40,6 +40,7 @@ Application::Application(float width, float height, HWND wndHandle)
 	sunLight = new Light_Dir(XMFLOAT3(lightX, lightY, lightZ));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
 	wTerrain = new Terrain();
 	quadTree = new Quadtree();
+	camFrustum = new Frustum();
 }
 
 Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
@@ -71,23 +72,12 @@ void Application::initiateApplication()
 
 	CreateGBuffers();
 	CreateShaders(); //4. Skapa vertex- och pixel-shaders
+	CreateTerrainShaders();
 	CreateDefShaders();
 	CreateShadowShader();
 	
-
-	//if (FAILED(hr))
-	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Shaders", L"ERROR", MB_OK);
-
 	initTerrain();
 	initModels();
-	//if (FAILED(hr))
-	//{
-	//	MessageBox(NULL, L"CRITICAL ERROR: Could not create Models", L"ERROR", MB_OK);
-	//}
-
-	//app.CreateTriangleData(); 
-	//5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
-	//return hr;
 }
 
 void Application::initTerrain()
@@ -120,7 +110,12 @@ bool Application::initModels()
 
 	//test för olika texture
 	ObjHandler->addSphere(1.f, 4.9f, 1.f);
-	ObjHandler->addCube(-5.f, 4.9f, 1.f);
+	ObjHandler->addCube(1.f, 4.9f, 15.f);
+	ObjHandler->addCube(1.f, 4.9f, 7.f);
+	ObjHandler->addCube(-5.f, 4.9f, 1.f);	
+	ObjHandler->addCube(-1.f, 4.9f, -7.f);
+
+	
 	//ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
 	//ObjHandler->addCube();
 	//3x trains
@@ -135,6 +130,11 @@ bool Application::initModels()
 
 void Application::Update()
 {
+	if (GetAsyncKeyState('3'))
+		topView = true;
+	if (GetAsyncKeyState('4'))
+		topView = false;
+
 	dt = timer.GetMillisecondsElapse();
 	timer.Restart();
 
@@ -144,7 +144,7 @@ void Application::Update()
 
 	//UpdateConstBuffer();
 	UpdateCamBuffer();
-
+	camFrustum->ConstructFrustum(75, constBuffData.projection, camera->getView());
 	sunLight->Update();
 
 	gui.CalcFPS(dt);
@@ -213,6 +213,59 @@ void Application::CreateShadowShader()
 		pPS->GetBufferPointer(),
 		pPS->GetBufferSize(),
 		nullptr, &SMPixelShader));
+	pPS->Release();
+}
+
+
+void Application::CreateTerrainShaders()
+{
+	// Binary Large OBject (BLOB), for compiled shader, and errors.
+	ID3DBlob* errorBlob = nullptr;
+
+	// Uses deferred vertex shader
+	
+	/** Geometry Shader **/
+	ID3DBlob* pGS = nullptr;
+
+	CHECK_HR(D3DCompileFromFile(
+		L"TerrainGeometry.hlsl",
+		nullptr,
+		nullptr,
+		"GS_main",
+		"gs_5_0",
+		D3DCOMPILE_DEBUG,
+		0,
+		&pGS,
+		&errorBlob
+	));
+
+	CHECK_HR(gDevice->CreateGeometryShader(
+		pGS->GetBufferPointer(),
+		pGS->GetBufferSize(),
+		nullptr,
+		&terrainGeometryShader));
+
+	/** Pixel Shader **/
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+	CHECK_HR(D3DCompileFromFile(
+		L"TerrainPixel.hlsl",		// filename
+		nullptr,				// optional macros
+		nullptr,				// optional include files
+		"PS_main",				// entry point
+		"ps_5_0",				// shader model (target)
+		D3DCOMPILE_DEBUG,		// shader compile options
+		0,						// effect compile options
+		&pPS,					// double pointer to ID3DBlob		
+		&errorBlob				// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreatePixelShader(
+		pPS->GetBufferPointer(),
+		pPS->GetBufferSize(),
+		nullptr, &terrainPixelShader));
 	pPS->Release();
 }
 
@@ -287,12 +340,7 @@ void Application::CreateDefShaders()
 	};
 
 	CHECK_HR(gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gDefVLayout));
-	//if (FAILED(hr))
-	//	MessageBox(NULL, L"CRITICAL ERROR: Creating inputlayout", L"ERROR", MB_OK);
-	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
-
-
 
 	/** Geometry Shader **/
 	ID3DBlob* pGS = nullptr;
@@ -310,18 +358,6 @@ void Application::CreateDefShaders()
 		&pGS,				// double pointer to ID3DBlob		
 		&errorBlob			// pointer for Error Blob messages.
 	));
-
-	// compilation failed?
-	//if (FAILED(hr))
-	//{
-	//	if (errorBlob)
-	//	{
-	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	//		errorBlob->Release();
-	//	}
-	//	if (pGS)
-	//		pGS->Release();
-	//}
 
 	CHECK_HR(gDevice->CreateGeometryShader(
 		pGS->GetBufferPointer(),
@@ -346,29 +382,134 @@ void Application::CreateDefShaders()
 		&errorBlob				// pointer for Error Blob messages.
 	));
 
-	// compilation failed?
-	//if (FAILED(hr))
-	//{
-	//	if (errorBlob)
-	//	{
-	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	//		errorBlob->Release();
-	//	}
-	//	if (pPS)
-	//		pPS->Release();
-	//	return hr;
-	//}
-
 	CHECK_HR(gDevice->CreatePixelShader(
 		pPS->GetBufferPointer(),
 		pPS->GetBufferSize(),
 		nullptr, &gDefPS));
+	pPS->Release();	
+}
+
+
+void Application::CreateParticleShaders()
+{
+	// Binary Large OBject (BLOB), for compiled shader, and errors.
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	/** Vertex Shader **/
+
+	CHECK_HR(D3DCompileFromFile(
+		L"ParticleVertex.hlsl",		// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"VS_main",			// entry point
+		"vs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pVS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreateVertexShader(
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
+		&particleVertex
+	));
+
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{
+			"POSITION",					 // "semantic" name in shader
+			0,							 // "semantic" index (not used)
+			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
+			0,							 // input slot
+			0,							 // offset of first element
+			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+			0							 // used for INSTANCING (ignore)
+		},
+		{
+			"TEXCOORD",
+			0,							 // same slot as previous (same vertexBuffer)
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			D3D11_APPEND_ALIGNED_ELEMENT,							 // offset of FIRST element (after POSITION)
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+	};
+
+	CHECK_HR(gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &particleInputLayout));
+	pVS->Release();
+
+	/** Geometry Shader **/
+	ID3DBlob* pGS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	CHECK_HR(D3DCompileFromFile(
+		L"ParticleGeometry.hlsl",		// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"GS_main",			// entry point
+		"gs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pGS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreateGeometryShader(
+		pGS->GetBufferPointer(),
+		pGS->GetBufferSize(),
+		nullptr,
+		&particleGeometry));
+
+	/** Pixel Shader **/
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+	CHECK_HR(D3DCompileFromFile(
+		L"ParticlePixel.hlsl",		// filename
+		nullptr,				// optional macros
+		nullptr,				// optional include files
+		"PS_main",				// entry point
+		"ps_5_0",				// shader model (target)
+		D3DCOMPILE_DEBUG,		// shader compile options
+		0,						// effect compile options
+		&pPS,					// double pointer to ID3DBlob		
+		&errorBlob				// pointer for Error Blob messages.
+	));
+
+	CHECK_HR(gDevice->CreatePixelShader(
+		pPS->GetBufferPointer(),
+		pPS->GetBufferSize(),
+		nullptr, &particlePixel));
 	pPS->Release();
 
-	//DepthStencil();
-	SetupImGui();
+	CreateParticleComputeShader();
+}
 
-	//return hr;
+void Application::CreateParticleComputeShader()
+{
+	ID3DBlob* pCS = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	CHECK_HR(D3DCompileFromFile(
+		L"ParticleCompute.hlsl",
+		nullptr, 
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"CS_main", 
+		"cs_5_0",
+		D3DCOMPILE_DEBUG,
+		0, 
+		&pCS,
+		&errorBlob));
+
+	CHECK_HR(gDevice->CreateComputeShader(
+		pCS->GetBufferPointer(),
+		pCS->GetBufferSize(),
+		nullptr, &particlesCompute));
 }
 
 void Application::CreateShaders()
@@ -567,7 +708,10 @@ HRESULT Application::UpdateCameraView()
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	hr = gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	constBuffData.view = camera->getView();
+	if (topView)
+		constBuffData.view = sunLight->getView();
+	else
+		constBuffData.view = camera->getView();
 	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
 	memcpy(mappedResource.pData, &constBuffData, sizeof(Constantbuffer));
 	gDeviceContext->Unmap(gConstantBuffer, 0);
@@ -603,16 +747,6 @@ void Application::Render()
 	// ------------------------------------------------------------------------
 	//** Shadowmapping Rendering **//
 
-	//deff
-	//ID3D11RenderTargetView* ShadowRenderTargetView = sunLight->getShadowRTV();
-	//ID3D11DepthStencilView* ShadowStencilView = sunLight->getShadowDSV();
-	//gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, sunLight->getShadowDSV());
-	//gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
-	//gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
-	//gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
-	//gDeviceContext->IASetInputLayout(gDefVLayout);
-	//drawScene();
-
 	// shadow
 	gDeviceContext->IASetInputLayout(gDefVLayout);
 	gDeviceContext->VSSetShader(SMVertexShader, nullptr, 0);
@@ -622,9 +756,35 @@ void Application::Render()
 	drawScene();	
 
 	// ------------------------------------------------------------------------
+	//** Terrain Rendering **//
+	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
+	gDeviceContext->GSSetShader(terrainGeometryShader, nullptr, 0);
+	gDeviceContext->PSSetShader(terrainPixelShader, nullptr, 0);
+	gDeviceContext->IASetInputLayout(gDefVLayout);
+	
+	gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, depthStencilView);
+
+	wTerrain->setTerrainMTL();
+	wTerrain->draw(constBuffData, gConstantBuffer, false);
+
+	// ------------------------------------------------------------------------
+	//** Particles Rendering **//
+	//gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
+	//gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
+	//gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
+	//gDeviceContext->IASetInputLayout(particleInputLayout);
+	//gDeviceContext->OMSetRenderTargets(0, nullptr, depthStencilView);
+	//gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+
+
+	//gDeviceContext->Dispatch(20, 20, 1);
+	//gDeviceContext->CSSetShader(nullptr, nullptr, 0);
+
+	//wTerrain->draw(constBuffData, gConstantBuffer, false);
+
+	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
 
-	gDeviceContext->OMSetRenderTargets(NROF_PASSES, gDefRTV, depthStencilView);
 
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
@@ -686,9 +846,9 @@ void Application::RenderImGui()
 
 void Application::drawScene(bool shadow)
 {
-		wTerrain->setTerrainMTL();
-		wTerrain->draw(constBuffData, gConstantBuffer, shadow);
-		quadTree->render(0, constBuffData, shadow);
+		//wTerrain->setTerrainMTL();
+		//wTerrain->draw(constBuffData, gConstantBuffer, shadow);
+		quadTree->render(camFrustum, constBuffData, shadow);
 		//ObjHandler->draw(constBuffData, shadow);
 		//lightHandler->draw();
 }
