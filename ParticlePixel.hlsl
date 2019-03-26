@@ -1,15 +1,17 @@
-Texture2D particleTex : register(t0); // texture of chosen particle
-SamplerState SamplerClamp : register(s0); // sample with clamp
+// Following code provided from Practical Rendering and Computation with Direct3d 11
+Texture2D ParticleTexture : register(t0);
+SamplerState LinearSampler : register(s0);
 
-struct GS_OUT
+struct PS_INPUT
 {
-    float4 Pos : SV_POSITION;
-    float4 wPos : POSITION;
-    float2 TexCoord : TEXCOORD;
+    int pos;
 };
 
-float4 PS_main(GS_OUT input) : SV_Target
+float4 PS_main(in PS_INPUT input) : SV_Target
 {
-    //float3 texture = particleTex.Sample(SamplerClamp, TexCoord).xyz;
-    return float4(1.f, 1.f, 1.f, 1.f); // white for just rain
+    //float4 color = ParticleTexture.Sample(LinearSampler, input.texcoords);
+    //color = color * input.color;
+
+    //return (color);
+    return float4(1, 1, 1, 1);
 }

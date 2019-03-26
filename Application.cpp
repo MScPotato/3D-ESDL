@@ -109,11 +109,32 @@ bool Application::initModels()
 	//lightHandler->CreateLightRGBABuffer();
 
 	//test för olika texture
-	ObjHandler->addSphere(1.f, 4.9f, 1.f);
-	ObjHandler->addCube(1.f, 4.9f, 15.f);
-	ObjHandler->addCube(1.f, 4.9f, 7.f);
-	ObjHandler->addCube(-5.f, 4.9f, 1.f);	
-	ObjHandler->addCube(-1.f, 4.9f, -7.f);
+	//ObjHandler->addSphere(1.f, 4.9f, 1.f);
+	//ObjHandler->addCube(1.f, 4.9f, 15.f);
+	//ObjHandler->addCube(1.f, 4.9f, 7.f);
+	//ObjHandler->addCube(-5.f, 4.9f, 1.f);	
+	//ObjHandler->addCube(-1.f, 4.9f, -7.f);
+
+	//level 1
+	ObjHandler->addSphere(-15.f, 4.9f, -15.f);
+
+	//level 2
+	ObjHandler->addCube(7.f, 4.9f, -23.f);
+	ObjHandler->addCube(7.f, 4.9f, -7.f);
+
+	ObjHandler->addCube(-7.f, 4.9f, 7.f);
+	ObjHandler->addCube(-7.f, 4.9f, 23.f);
+	
+	//level 3
+	ObjHandler->addCube(11.f, 4.9f, 11.f);
+	ObjHandler->addCube(11.f, 4.9f, 3.f);
+	ObjHandler->addCube(3.f, 4.9f, 3.f);
+	//ObjHandler->addCube(4.f, 4.9f, 12.f);
+
+	//level 4
+	ObjHandler->addCube(3.f, 4.9f, 11.f);
+	ObjHandler->addCube(5.f, 4.9f, 11.f);
+
 
 	
 	//ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);

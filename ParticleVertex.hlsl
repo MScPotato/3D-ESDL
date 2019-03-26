@@ -1,38 +1,28 @@
-cbuffer CONSTANT_BUFFER : register(b0)
+// Following code provided from Practical Rendering and Computation with Direct3d 11
+struct Particle
 {
-    float4x4 world;
-    float4x4 view;
-    float4x4 projection;
+    float3 position;
+    float3 direction;
+    float time;
 };
 
-cbuffer Camera_Buffer : register(b1)
+StructuredBuffer<Particle> SimulationState;
+
+struct VS_INPUT
 {
-    float3 camPos;
+    uint vertexid : SV_VertexID;
 };
 
-struct VS_IN
+struct VS_OUTPUT
 {
-    float3 Pos : POSITION;
-    float2 TexCoord : TEXCOORD;
+    float3 position : Position;
 };
 
-struct VS_OUT
+VS_OUTPUT VS_main(in VS_INPUT input)
 {
-    float4 Pos : SV_POSITION;
-    float4 wPos : POSITION;
-    float2 TexCoord : TEXCOORD;
-};
+    VS_OUTPUT output;
 
-VS_OUT VS_main(VS_IN input)
-{
-    VS_OUT output = (VS_OUT) 0;
+    output.position.xyz = SimulationState[input.vertexid].position;
 
-    output.Pos = float4(input.Pos, 1);
-    output.Pos = mul(world, output.Pos);
-    output.wPos = output.Pos;
-    output.Pos = mul(view, output.Pos);
-    output.Pos = mul(projection, output.Pos);
-
-    output.TexCoord = input.TexCoord;
     return output;
 }
