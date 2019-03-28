@@ -55,3 +55,8 @@ struct TerrainVertex
 	XMFLOAT2 uv;
 	XMFLOAT3 normal;
 };
+
+struct Particle
+{
+	XMFLOAT3 pos;
+};

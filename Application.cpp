@@ -29,6 +29,9 @@ Application::Application(float width, float height, HWND wndHandle)
 	depthStencilView = nullptr;
 	depthStencilBuffer = nullptr;
 
+	particlesBuffer = nullptr;
+	SRVparticles = nullptr;
+
 	camera = new Camera(width, height, wndHandle);
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
 	constBuffData.view = camera->getView();
@@ -63,7 +66,9 @@ void Application::initiateApplication()
 	if (FAILED(hr))
 		MessageBox(NULL, L"CRITICAL ERROR: Could not create 3DContext", L"ERROR", MB_OK);
 	
+	initiateParticles();
 	CreateConstantbufferDescription();
+	CreateParticleBuffer();
 	CreateCameraBuffer();
 	CreateQuadBuffer();
 	SetViewport(); //3. Sätt viewport
@@ -75,9 +80,11 @@ void Application::initiateApplication()
 	CreateTerrainShaders();
 	CreateDefShaders();
 	CreateShadowShader();
+	CreateParticleShaders();
 	
 	initTerrain();
 	initModels();
+	
 }
 
 void Application::initTerrain()
@@ -147,6 +154,17 @@ bool Application::initModels()
 	quadTree->InitTree(gDeviceContext, gTextureSRV, gConstantBuffer, ObjHandler, 64);
 
 	return true;
+}
+
+void Application::initiateParticles()
+{
+	Particle temp;
+	for (int i = 0; i < 1000; i++)
+	{
+		XMFLOAT3 particlePos = XMFLOAT3(Math::RandomInt(-32, 32), 25, Math::RandomInt(-32, 32));
+		temp.pos = particlePos;
+		particles.push_back(temp);
+	}	
 }
 
 void Application::Update()
@@ -442,20 +460,11 @@ void Application::CreateParticleShaders()
 		{
 			"POSITION",					 // "semantic" name in shader
 			0,							 // "semantic" index (not used)
-			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
+			DXGI_FORMAT_R32_UINT,		 // size of ONE element (1 uint)
 			0,							 // input slot
 			0,							 // offset of first element
 			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
 			0							 // used for INSTANCING (ignore)
-		},
-		{
-			"TEXCOORD",
-			0,							 // same slot as previous (same vertexBuffer)
-			DXGI_FORMAT_R32G32_FLOAT,
-			0,
-			D3D11_APPEND_ALIGNED_ELEMENT,							 // offset of FIRST element (after POSITION)
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
 		}
 	};
 
@@ -679,6 +688,37 @@ void Application::CreateShaders()
 	//return hr;
 }
 
+void Application::CreateParticleBuffer()
+{
+	D3D11_BUFFER_DESC desc;
+	ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.ByteWidth = sizeof(Particle) * particles.size();
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	desc.StructureByteStride = sizeof(Particle);
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = &particles;
+	data.SysMemPitch = 0;
+	data.SysMemSlicePitch = 0;
+
+	CHECK_HR(gDevice->CreateBuffer(&desc, &data, &particlesBuffer));
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC SRVdesc;
+	SRVdesc.Format = DXGI_FORMAT_UNKNOWN;
+
+	SRVdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	SRVdesc.Buffer.ElementOffset = 0;
+	SRVdesc.Buffer.ElementWidth = sizeof(Particle);
+
+	//ID3D11ShaderResourceView* pView = 0;
+	CHECK_HR(gDevice->CreateShaderResourceView(particlesBuffer, &SRVdesc, &SRVparticles));
+
+	gDeviceContext->CSSetShaderResources(0, 1, &SRVparticles);
+}
+
 HRESULT Application::CreateConstantbufferDescription()
 {
 	D3D11_BUFFER_DESC cbufferDesc;
@@ -759,6 +799,9 @@ void Application::Render()
 
 	// ------------------------------------------------------------------------
 	// null all shaders
+
+	// specifying NULL or nullptr we are disabling that stage
+	// in the pipeline
 	gDeviceContext->VSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
@@ -768,7 +811,6 @@ void Application::Render()
 	// ------------------------------------------------------------------------
 	//** Shadowmapping Rendering **//
 
-	// shadow
 	gDeviceContext->IASetInputLayout(gDefVLayout);
 	gDeviceContext->VSSetShader(SMVertexShader, nullptr, 0);
 	gDeviceContext->PSSetShader(SMPixelShader, nullptr, 0);
@@ -778,6 +820,7 @@ void Application::Render()
 
 	// ------------------------------------------------------------------------
 	//** Terrain Rendering **//
+
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
 	gDeviceContext->GSSetShader(terrainGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(terrainPixelShader, nullptr, 0);
@@ -790,25 +833,21 @@ void Application::Render()
 
 	// ------------------------------------------------------------------------
 	//** Particles Rendering **//
-	//gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
-	//gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
-	//gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
-	//gDeviceContext->IASetInputLayout(particleInputLayout);
+
+	gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
+	gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
+	gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
+	gDeviceContext->IASetInputLayout(particleInputLayout);
 	//gDeviceContext->OMSetRenderTargets(0, nullptr, depthStencilView);
-	//gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+	gDeviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-
-	//gDeviceContext->Dispatch(20, 20, 1);
-	//gDeviceContext->CSSetShader(nullptr, nullptr, 0);
-
-	//wTerrain->draw(constBuffData, gConstantBuffer, false);
+	gDeviceContext->Dispatch(10, 1, 1);
+	gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
+	gDeviceContext->CSSetShader(nullptr, nullptr, 0);
 
 	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
-
-
-	// specifying NULL or nullptr we are disabling that stage
-	// in the pipeline
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
 	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
@@ -841,7 +880,6 @@ void Application::Render()
 	}
 
 	ID3D11ShaderResourceView* pSRV = sunLight->getShadowSRV();
-
 	gDeviceContext->PSSetShaderResources(NROF_PASSES, 1, &camDepth_SRV);
 	gDeviceContext->PSSetShaderResources(NROF_PASSES + 1, 1, &pSRV);
 

@@ -31,6 +31,8 @@ private:
 	Quadtree* quadTree;
 	Frustum* camFrustum;
 
+	std::vector<Particle> particles;
+
 	// time
 	Timer timer;
 	double dt = 0.f;
@@ -46,6 +48,7 @@ private:
 	IDXGISwapChain* gSwapChain;
 	ID3D11RenderTargetView* gBackbufferRTV; // A "view" of a particular resource (the color buffer)
 
+	
 	// a resource to store Vertices in the GPU
 	ID3D11InputLayout* gVertexLayout;
 	ID3D11Buffer* gConstantBuffer;
@@ -95,7 +98,9 @@ private:
 	ID3D11PixelShader* particlePixel;
 	ID3D11ComputeShader* particlesCompute;
 	ID3D11InputLayout* particleInputLayout;
-
+	ID3D11Buffer* particlesBuffer;
+	ID3D11ShaderResourceView* SRVparticles;
+	
 	//---------------------------------------
 
 	ID3D11DepthStencilView* depthStencilView;
@@ -116,12 +121,14 @@ public:
 
 	void initTerrain();
 	bool initModels();
+	void initiateParticles();
 	//HRESULT CreateDeferredShaders();
 	void CreateShadowShader();
 	void CreateTerrainShaders();
 	void CreateDefShaders();
 	void CreateParticleShaders();
 	void CreateParticleComputeShader();
+	void CreateParticleBuffer();
 	void CreateGBuffers(); // Deferred Tex, RTV, SRV
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);
