@@ -18,16 +18,17 @@ void CS_main(uint3 DispatchThreadID : SV_DispatchThreadID)
     uint myID = DispatchThreadID.x 
     + DispatchThreadID.y * size_x
     + DispatchThreadID.z * size_x * size_x;
-
         
     posStruct p = OutputTex[myID];
 
-    p.position.y -= 0.1f;
+    // Particles has a constant value of (0, 4.9, 0) (in front of the camera) for now.
 
-    if (p.position.y < 0.0f)
-    {
-        p.position.y = 25.f;
-    }
+    //p.position.y -= 0.1f;
+
+    //if (p.position.y < 0.0f)
+    //{
+    //    p.position.y = 4.9f;
+    //}
 
     OutputTex[myID] = p;
     

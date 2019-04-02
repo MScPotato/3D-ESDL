@@ -161,7 +161,7 @@ void Application::initiateParticles()
 	Particle temp;
 	for (int i = 0; i < 1000; i++)
 	{
-		XMFLOAT3 particlePos = XMFLOAT3(Math::RandomInt(-32, 32), 25, Math::RandomInt(-32, 32));
+		XMFLOAT3 particlePos = XMFLOAT3(0, 4.9, 0);//XMFLOAT3(Math::RandomInt(-32, 32), 25, Math::RandomInt(-32, 32));
 		temp.pos = particlePos;
 		particles.push_back(temp);
 	}	
@@ -458,7 +458,7 @@ void Application::CreateParticleShaders()
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
-			"POSITION",					 // "semantic" name in shader
+			"BLENDINDICES",					// "semantic" name in shader
 			0,							 // "semantic" index (not used)
 			DXGI_FORMAT_R32_UINT,		 // size of ONE element (1 uint)
 			0,							 // input slot
@@ -700,7 +700,7 @@ void Application::CreateParticleBuffer()
 	desc.StructureByteStride = sizeof(Particle);
 
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &particles;
+	data.pSysMem = particles.data();
 	data.SysMemPitch = 0;
 	data.SysMemSlicePitch = 0;
 
@@ -832,22 +832,9 @@ void Application::Render()
 	wTerrain->draw(constBuffData, gConstantBuffer, false);
 
 	// ------------------------------------------------------------------------
-	//** Particles Rendering **//
-
-	gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
-	gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
-	gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
-	gDeviceContext->IASetInputLayout(particleInputLayout);
-	//gDeviceContext->OMSetRenderTargets(0, nullptr, depthStencilView);
-	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
-	gDeviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_POINTLIST);
-
-	gDeviceContext->Dispatch(10, 1, 1);
-	gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
-	gDeviceContext->CSSetShader(nullptr, nullptr, 0);
-
-	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//
+	
+
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
 	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
@@ -886,6 +873,23 @@ void Application::Render()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
 
+	gDeviceContext->IASetVertexBuffers(0, 0, nullptr, 0, 0); //test
+
+	// ------------------------------------------------------------------------
+	//** Particles Rendering **//
+
+	gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
+	gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
+	gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
+	gDeviceContext->IASetInputLayout(particleInputLayout);
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+	gDeviceContext->Dispatch(10, 1, 1); // [100,1,1]
+	gDeviceContext->CSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
+
 	// ------------------------------------------------------------------------
 	RenderImGui();
 
@@ -895,7 +899,7 @@ void Application::Render()
 
 void Application::RenderImGui()
 {
-	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, camDepth_SRV, sunLight->getShadowSRV());
+	gui.Update(ObjHandler, camera->getPosition(), gDefSRV, camDepth_SRV, sunLight->getShadowSRV(), SRVparticles);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui::Render();

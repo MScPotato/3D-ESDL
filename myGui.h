@@ -28,6 +28,12 @@ public:
 	~myGui();
 
 	void CalcFPS(double dt);
-	void Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], ID3D11ShaderResourceView* CAMdepthView, ID3D11ShaderResourceView* SMdepthView);
+	void Update(
+		ModelHandler* ObjHandler, 
+		XMFLOAT3 camPos, 
+		ID3D11ShaderResourceView* gDefTex[], 
+		ID3D11ShaderResourceView* CAMdepthView, 
+		ID3D11ShaderResourceView* SMdepthView, 
+		ID3D11ShaderResourceView* particles);
 };
 

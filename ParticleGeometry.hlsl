@@ -1,9 +1,3 @@
-//cbuffer ParticleRenderParameters
-//{
-//    float4 EmitterLocation;
-//    float4 ConsumerLocation;
-//};
-
 static const float4 g_positions[4] =
 {
     float4(-1, 1, 0, 0),
@@ -30,7 +24,7 @@ struct VS_OUTPUT
 
 struct GS_OUTPUT
 {
-    float3 position : Position;
+    float4 position : Position;
     float2 texCoord : texCoord;
 };
 
@@ -40,15 +34,21 @@ inout TriangleStream<GS_OUTPUT> output)
 {
     GS_OUTPUT element;
 
-    float4 viewPosition = mul(float4(input[0].position, 1.0f), input[0].world);
-    viewPosition = mul(viewPosition, input[0].view);
-
-    for (int i = 0; i < 4; i++)
-    {
-        element.position = mul(viewPosition + g_positions[i], input[0].projection);
-        element.texCoord = g_texcoords[i];
-        output.Append(element);
-    }
+    float4 viewPosition = mul(input[0].world, float4(input[0].position, 1.0f));
+    viewPosition = mul(input[0].view, viewPosition);
+  
+    viewPosition = mul(input[0].projection, viewPosition);
+    element.position = viewPosition;
+    element.texCoord = float2(0, 0);
+    output.Append(element);
+  
+    //for (int i = 0; i < 4; i++)
+    //{
+    //    element.position = mul(input[0].projection, viewPosition + g_positions[i]);
+    //    element.texCoord = g_texcoords[i];
+    //    output.Append(element);
+    //}
+   
     output.RestartStrip();
 
 }

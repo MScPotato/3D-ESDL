@@ -110,7 +110,7 @@ float4 PS_main(VS_OUT input) : SV_Target
     finalColor = (ambient + (shadow) * (diffuse + specular)) * color;
     
     return float4(finalColor, 1.f);
-
+    
     
     //float3 VecPosToLight = input.Pos.xyz - shadowPos;
     //float3 VecLightposToLight = input.LightPos.xyz - shadowPos;

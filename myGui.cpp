@@ -24,7 +24,13 @@ void myGui::CalcFPS(double dt)
 	}
 }
 
-void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResourceView* gDefTex[], ID3D11ShaderResourceView* CAMdepthView, ID3D11ShaderResourceView* SMdepthView)
+void myGui::Update(
+	ModelHandler* ObjHandler, 
+	XMFLOAT3 camPos, 
+	ID3D11ShaderResourceView* gDefTex[], 
+	ID3D11ShaderResourceView* CAMdepthView, 
+	ID3D11ShaderResourceView* SMdepthView, 
+	ID3D11ShaderResourceView* particles)
 {
 	// --------------------------------------------------------
 	// ImGui
@@ -77,6 +83,8 @@ void myGui::Update(ModelHandler* ObjHandler, XMFLOAT3 camPos, ID3D11ShaderResour
 		ImGui::Image((void*)CAMdepthView, ImVec2(192, 108));
 		ImGui::SameLine();
 		ImGui::Image((void*)SMdepthView, ImVec2(192, 108));
+
+		//ImGui::Image((void*)particles, ImVec2(192, 108));
 	}
 	
 	// Spawn Menu

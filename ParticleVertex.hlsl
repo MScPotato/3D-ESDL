@@ -8,15 +8,13 @@ cbuffer CONSTANT_BUFFER : register(b0)
 struct Particle
 {
     float3 position;
-    float3 direction;
-    float time;
 };
 
 StructuredBuffer<Particle> SimulationState;
 
 struct VS_INPUT
 {
-    uint vertexID : SV_VertexID;
+    uint vertexID : BLENDINDICES;
 };
 
 struct VS_OUTPUT
