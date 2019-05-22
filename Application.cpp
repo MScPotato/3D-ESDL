@@ -94,35 +94,20 @@ Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 	gDefPS->Release();
 	gDefGS->Release();
 	gDefVS->Release();
-
-	//---------------------------------------
 	//---------- Terrain Rendering ----------
-	//---------------------------------------
-
 	terrainPixelShader->Release();
 	terrainGeometryShader->Release();
-
-	//---------------------------------------
 	//---------- Shadow Rendering -----------
-	//---------------------------------------
-
 	SMPixelShader->Release();
 	SMVertexShader->Release();
 
-	// a resource to store Vertices in the GPU
 	gQuadBuffer->Release();
 	gVertexLayout->Release();
 	gConstantBuffer->Release();
-
-	//---------------------------------------
 	//--------- Default rendering ----------
-	//---------------------------------------
-
 	gPixelShader->Release();
 	gVertexShader->Release();
-
-	//---------------------------------------
-	
+	//---------------------------------------	
 	gSampleStateClamp->Release();
 	gSampleStateWrap->Release();
 	depthStencilBuffer->Release();
@@ -1019,6 +1004,7 @@ void Application::Render()
 
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
+	RenderImGui();
 
 	//gDeviceContext->IASetVertexBuffers(0, 0, nullptr, 0, 0); //test
 
@@ -1075,7 +1061,7 @@ void Application::Render()
 	//gDeviceContext->Draw(particles.size(), 0);
 
 	// ------------------------------------------------------------------------
-	RenderImGui();
+	//RenderImGui();
 
 	// Present the backbuffer / present the finished image quad
 	gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
