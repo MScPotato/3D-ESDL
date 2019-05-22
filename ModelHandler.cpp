@@ -10,6 +10,7 @@ ModelHandler::ModelHandler()
 
 ModelHandler::~ModelHandler()
 {	
+	delete loader;
 }
 
 void ModelHandler::ClearObjects()

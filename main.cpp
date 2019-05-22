@@ -3,12 +3,18 @@
 //--------------------------------------------------------------------------------------
 #include "pch.h"
 #include "Application.h"
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 
 #define WIDTH 1024
 #define HEIGHT 768
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr))
 	{

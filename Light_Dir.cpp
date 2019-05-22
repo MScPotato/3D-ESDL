@@ -38,6 +38,16 @@ void Light_Dir::InitDirLight(ID3D11Device* gDevice, ID3D11DeviceContext* gDevice
 
 Light_Dir::~Light_Dir()
 {
+	//gDevice->Release();
+	//gDeviceContext->Release();
+
+	//shadowBuffer->Release();
+	//shadowView->Release();
+	//shadowRTV->Release();
+	//shadowSRV->Release();
+
+	//lightPosBuffer->Release();
+	//lightBuffer->Release();
 }
 
 void Light_Dir::CreateLightBuffers()

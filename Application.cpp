@@ -3,6 +3,8 @@
 
 Application::Application(float width, float height, HWND wndHandle)
 {
+	
+
 	timer.Start();
 	this->width = width;
 	this->height = height;
@@ -31,6 +33,8 @@ Application::Application(float width, float height, HWND wndHandle)
 
 	particlesBuffer = nullptr;
 	SRVparticles = nullptr;
+	TextureParticle = nullptr;
+	UAVParticles = nullptr;
 
 	camera = new Camera(width, height, wndHandle);
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
@@ -44,20 +48,98 @@ Application::Application(float width, float height, HWND wndHandle)
 	wTerrain = new Terrain();
 	quadTree = new Quadtree();
 	camFrustum = new Frustum();
+
+	
 }
 
 Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 {
-	//gVertexBuffer->Release();
+	//SRVparticles->Release();
+	//UAVParticles->Release();
+	//particlesBuffer->Release();
 
-	//gVertexLayout->Release();
-	//gVertexShader->Release();
-	//gPixelShader->Release();
+	delete ObjHandler;
+	delete lightHandler;
+	delete sunLight;
+	delete wTerrain;
+	delete quadTree;
+	delete camFrustum;
 
-	//gBackbufferRTV->Release();
-	//gSwapChain->Release();
-	//gDevice->Release();
-	//gDeviceContext->Release();
+	//---------------------------------------
+	//---------- Particles Rendering -----------
+	//---------------------------------------
+
+	UAVParticles->Release();
+	TextureParticle->Release();
+	SRVparticles->Release();
+	particlesBuffer->Release();
+	particleInputLayout->Release();
+	particlesCompute->Release();
+	particlePixel->Release();
+	particleGeometry->Release();
+	particleVertex->Release();
+
+	//---------------------------------------
+	//--------- Deferred rendering ----------
+	//---------------------------------------
+
+	gDefVLayout->Release();
+	
+	for (int i = 0; i < NROF_PASSES; i++) {
+		gDefTex[i]->Release();
+		gDefRTV[i]->Release();
+		gDefSRV[i]->Release();
+	}
+
+	gDefPS->Release();
+	gDefGS->Release();
+	gDefVS->Release();
+
+	//---------------------------------------
+	//---------- Terrain Rendering ----------
+	//---------------------------------------
+
+	terrainPixelShader->Release();
+	terrainGeometryShader->Release();
+
+	//---------------------------------------
+	//---------- Shadow Rendering -----------
+	//---------------------------------------
+
+	SMPixelShader->Release();
+	SMVertexShader->Release();
+
+	// a resource to store Vertices in the GPU
+	gQuadBuffer->Release();
+	gVertexLayout->Release();
+	gConstantBuffer->Release();
+
+	//---------------------------------------
+	//--------- Default rendering ----------
+	//---------------------------------------
+
+	gPixelShader->Release();
+	gVertexShader->Release();
+
+	//---------------------------------------
+	
+	gSampleStateClamp->Release();
+	gSampleStateWrap->Release();
+	depthStencilBuffer->Release();
+	depthStencilView->Release();
+	
+	gBackbufferRTV->Release();
+	gSwapChain->Release();
+	gDeviceContext->Release();
+	gDevice->Release();
+
+	//gTextureSRV->Release();
+	if (pDebug != nullptr)
+	{
+		pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+		//pDebug->ReportLiveObjects(D3D11_RLDO_DETAIL);
+		pDebug = nullptr;
+	}
 }
 
 void Application::initiateApplication()
@@ -66,8 +148,8 @@ void Application::initiateApplication()
 	if (FAILED(hr))
 		MessageBox(NULL, L"CRITICAL ERROR: Could not create 3DContext", L"ERROR", MB_OK);
 	
-	initiateParticles();
 	CreateConstantbufferDescription();
+	initiateParticles();
 	CreateParticleBuffer();
 	CreateCameraBuffer();
 	CreateQuadBuffer();
@@ -158,11 +240,20 @@ bool Application::initModels()
 
 void Application::initiateParticles()
 {
+	CHECK_HR(CreateWICTextureFromFile(gDevice, L"Textures\\snowflake_white.png", nullptr, &TextureParticle));
+	if (FAILED(hr))
+	{
+		CHECK_HR(CreateWICTextureFromFile(gDevice, L"Textures\\Default.jpg", nullptr, &TextureParticle));
+		MessageBox(NULL, L"Loading texture Failed!", L"ERROR", MB_OK);
+	}
+
+	//---------------------------------------------
+	
 	Particle temp;
+
 	for (int i = 0; i < 1000; i++)
 	{
-		XMFLOAT3 particlePos = XMFLOAT3(0, 4.9, 0);//XMFLOAT3(Math::RandomInt(-32, 32), 25, Math::RandomInt(-32, 32));
-		temp.pos = particlePos;
+		temp.pos = XMFLOAT3(Math::RandomInt(-32, 32), Math::RandomInt(3, 20), Math::RandomInt(-32, 32));
 		particles.push_back(temp);
 	}	
 }
@@ -185,6 +276,7 @@ void Application::Update()
 	UpdateCamBuffer();
 	camFrustum->ConstructFrustum(75, constBuffData.projection, camera->getView());
 	sunLight->Update();
+	//updateParticles();
 
 	gui.CalcFPS(dt);
 }
@@ -457,16 +549,28 @@ void Application::CreateParticleShaders()
 	));
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
-		{
-			"BLENDINDICES",					// "semantic" name in shader
-			0,							 // "semantic" index (not used)
-			DXGI_FORMAT_R32_UINT,		 // size of ONE element (1 uint)
-			0,							 // input slot
-			0,							 // offset of first element
-			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
-			0							 // used for INSTANCING (ignore)
-		}
+	{
+		"SV_VertexID",					// "semantic" name in shader
+		0,							 // "semantic" index (not used)
+		DXGI_FORMAT_R32_UINT,		 // size of ONE element (1 uint)
+		0,							 // input slot
+		0,							 // offset of first element
+		D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+		0							 // used for INSTANCING (ignore)
+	}
 	};
+
+	//D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+	//	{
+	//		"POSITION",					// "semantic" name in shader
+	//		0,							 // "semantic" index (not used)
+	//		DXGI_FORMAT_R32G32B32_FLOAT,		 // size of ONE element (1 uint)
+	//		0,							 // input slot
+	//		0,							 // offset of first element
+	//		D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+	//		0							 // used for INSTANCING (ignore)
+	//	}
+	//};
 
 	CHECK_HR(gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &particleInputLayout));
 	pVS->Release();
@@ -711,12 +815,52 @@ void Application::CreateParticleBuffer()
 
 	SRVdesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	SRVdesc.Buffer.ElementOffset = 0;
-	SRVdesc.Buffer.ElementWidth = sizeof(Particle);
+	SRVdesc.Buffer.ElementWidth = 1000; // sizeof(Particle);
 
 	//ID3D11ShaderResourceView* pView = 0;
 	CHECK_HR(gDevice->CreateShaderResourceView(particlesBuffer, &SRVdesc, &SRVparticles));
 
-	gDeviceContext->CSSetShaderResources(0, 1, &SRVparticles);
+	//gDeviceContext->VSSetShaderResources(0, 1, &SRVparticles);
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVdesc;
+	UAVdesc.Format = DXGI_FORMAT_UNKNOWN;
+	UAVdesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	UAVdesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_COUNTER;
+	UAVdesc.Buffer.FirstElement = 0;
+	UAVdesc.Buffer.NumElements = 1000;
+	CHECK_HR(gDevice->CreateUnorderedAccessView(particlesBuffer, &UAVdesc, &UAVParticles));
+
+	return;
+}
+
+//Gammal och om vi kan få ^ att funka så är den onödig
+//void Application::CreateParticleBuffer()
+//{
+//	D3D11_BUFFER_DESC desc;
+//	ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
+//	desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+//	desc.Usage = D3D11_USAGE_IMMUTABLE;
+//	desc.ByteWidth = sizeof(Particle) * particles.size();
+//	desc.CPUAccessFlags = 0;
+//	desc.MiscFlags = 0;
+//	//desc.StructureByteStride = sizeof(Particle);
+//
+//	D3D11_SUBRESOURCE_DATA data;
+//	data.pSysMem = particles.data();
+//	data.SysMemPitch = 0;
+//	data.SysMemSlicePitch = 0;
+//	
+//	CHECK_HR(gDevice->CreateBuffer(&desc, &data, &particlesBuffer));
+//}
+
+void Application::updateParticles()
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	//ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	hr = gDeviceContext->Map(particlesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	memcpy(mappedResource.pData, &particles, sizeof(Particle));
+	gDeviceContext->Unmap(particlesBuffer, 0);
+	//gDeviceContext->VSSet(0, 1, &particlesBuffer);
 }
 
 HRESULT Application::CreateConstantbufferDescription()
@@ -832,8 +976,7 @@ void Application::Render()
 	wTerrain->draw(constBuffData, gConstantBuffer, false);
 
 	// ------------------------------------------------------------------------
-	//** Deferred Rendering **//
-	
+	//** Deferred Rendering **//	
 
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
@@ -850,6 +993,10 @@ void Application::Render()
 	UINT quadSize = sizeof(float) * 5;
 	UINT offset = 0;
 	
+	ID3D11RenderTargetView* pNullRTV[] = { NULL };
+	ID3D11DepthStencilView* pNullDSV = nullptr;
+	gDeviceContext->OMSetRenderTargets(1, pNullRTV, pNullDSV);
+
 	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 	gDeviceContext->IASetVertexBuffers(0, 1, &gQuadBuffer, &quadSize, &offset);
 
@@ -873,10 +1020,38 @@ void Application::Render()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(6, 0);
 
-	gDeviceContext->IASetVertexBuffers(0, 0, nullptr, 0, 0); //test
+	//gDeviceContext->IASetVertexBuffers(0, 0, nullptr, 0, 0); //test
 
 	// ------------------------------------------------------------------------
 	//** Particles Rendering **//
+	//quadSize = sizeof(Particle);
+	//offset = 0;
+	//gDeviceContext->IASetVertexBuffers(0, 1, &particlesBuffer, &quadSize, &offset);
+
+	//ID3D11RenderTargetView* pNullRTV[] = { NULL };
+	//gDeviceContext->OMSetRenderTargets(NROF_PASSES, pNullRTV, nullptr);
+
+	ID3D11Buffer* buffers[] = { nullptr };
+	UINT strides[] = { NULL };
+	UINT offsets[] = { NULL };
+	gDeviceContext->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+
+	ID3D11ShaderResourceView* pNullSRV[] = { nullptr };
+	for (int i = 0; i < NROF_PASSES + 2; i++)
+		gDeviceContext->PSSetShaderResources(i, 1, pNullSRV);
+
+	//for (int i = 0; i < NROF_PASSES+2; i++) {
+	//	gDeviceContext->PSSetShaderResources(i, 1, nullptr);
+	//}
+
+
+	gDeviceContext->IASetInputLayout(nullptr);
+	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+	gDeviceContext->CSSetUnorderedAccessViews(0, 1, &UAVParticles, nullptr);
+	gDeviceContext->Dispatch(10, 1, 1); // 10 * 100
+
+	ID3D11UnorderedAccessView* UAVViewNULL[1] = { nullptr };
+	gDeviceContext->CSSetUnorderedAccessViews(0, 1, UAVViewNULL, nullptr);
 
 	gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
 	gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
@@ -885,16 +1060,26 @@ void Application::Render()
 	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
-	gDeviceContext->Dispatch(10, 1, 1); // [100,1,1]
-	gDeviceContext->CSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
+	// resource after shader settings
+	gDeviceContext->VSSetShaderResources(0, 1, &SRVparticles);
+	gDeviceContext->PSSetShaderResources(0, 1, &TextureParticle);
+
+	gDeviceContext->Draw(1000, 0);
+	gDeviceContext->VSSetShaderResources(0, 1, pNullSRV);
+
+
+	////ComputeShader.SetUnorderedAccessView(TRIANGLE_SLOT, null); // too clean?
+	//gDeviceContext->CSSetShader(nullptr, nullptr, 0);
+
+	//gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
+	//gDeviceContext->Draw(particles.size(), 0);
 
 	// ------------------------------------------------------------------------
 	RenderImGui();
 
 	// Present the backbuffer / present the finished image quad
 	gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
+
 }
 
 void Application::RenderImGui()
@@ -909,11 +1094,14 @@ void Application::RenderImGui()
 
 void Application::drawScene(bool shadow)
 {
-		//wTerrain->setTerrainMTL();
-		//wTerrain->draw(constBuffData, gConstantBuffer, shadow);
 		quadTree->render(camFrustum, constBuffData, shadow);
-		//ObjHandler->draw(constBuffData, shadow);
-		//lightHandler->draw();
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+		XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
+		memcpy(mappedResource.pData, &constBuffData, sizeof(Constantbuffer));
+		gDeviceContext->Unmap(gConstantBuffer, 0);
+		gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 }
 
 HRESULT Application::CreateDirect3DContext(HWND wndHandle)
@@ -932,13 +1120,17 @@ HRESULT Application::CreateDirect3DContext(HWND wndHandle)
 	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;                                    // windowed/full-screen mode
 
-															// create a device, device context and swap chain using the information in the scd struct
+	D3D_FEATURE_LEVEL levels[] = {
+		D3D_FEATURE_LEVEL_11_1,
+	};
+
+	// create a device, device context and swap chain using the information in the scd struct
 	hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		NULL,
-		NULL,
-		NULL,
+		D3D11_CREATE_DEVICE_DEBUG,
+		levels,
+		1,
 		D3D11_SDK_VERSION,
 		&scd,
 		&gSwapChain,
@@ -961,6 +1153,8 @@ HRESULT Application::CreateDirect3DContext(HWND wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
 
 	}
+	CHECK_HR(gDevice->QueryInterface(IID_PPV_ARGS(&pDebug)));	
+
 	return hr;
 }
 

@@ -10,16 +10,16 @@ struct Particle
     float3 position;
 };
 
-StructuredBuffer<Particle> SimulationState;
+StructuredBuffer<Particle> SimulationState : register(t0);
 
 struct VS_INPUT
 {
-    uint vertexID : BLENDINDICES;
+    uint id : SV_VertexID;
 };
 
 struct VS_OUTPUT
 {
-    float3 position : Position;
+    float4 pos : SV_POSITION;
     float4x4 world : World;
     float4x4 view : View;
     float4x4 projection : Projection;
@@ -27,9 +27,9 @@ struct VS_OUTPUT
 
 VS_OUTPUT VS_main(in VS_INPUT input)
 {
-    VS_OUTPUT output;
+    VS_OUTPUT output = (VS_OUTPUT)0;
 
-    output.position.xyz = SimulationState[input.vertexID].position;
+    output.pos = float4(SimulationState[input.id].position, 1);
     output.world = world;
     output.view = view;
     output.projection = projection;

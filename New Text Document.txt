@@ -1,0 +1,14 @@
+Line 1032: gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+D3D11 WARNING: ID3D11DeviceContext::OMSetRenderTargets: 
+	Resource being set to OM DepthStencil is still bound on input! [ STATE_SETTING WARNING #9: DEVICE_OMSETRENDERTARGETS_HAZARD]
+
+Line 1032: gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
+D3D11 WARNING: ID3D11DeviceContext::OMSetRenderTargets[AndUnorderedAccessViews]: 
+	Forcing PS shader resource slot 4 to NULL. [ STATE_SETTING WARNING #7: DEVICE_PSSETSHADERRESOURCES_HAZARD]
+
+Line 1036: gDeviceContext->Draw(1000, 0);
+D3D11 WARNING: ID3D11DeviceContext::Draw: 
+	Vertex Buffer at the input vertex slot 0 is not big enough for what the Draw*() call expects to traverse. 
+	This is OK, as reading off the end of the Buffer is defined to return 0. 
+	However the developer probably did not intend to make use of this behavior.  [ EXECUTION WARNING #356: DEVICE_DRAW_VERTEX_BUFFER_TOO_SMALL]
+

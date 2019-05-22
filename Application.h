@@ -15,6 +15,7 @@ const float lightZ = 0.f;
 class Application
 {
 private:
+	ID3D11Debug* pDebug;
 	//ImGuiManager* ImGuiManager;
 	// foundation
 	float width, height;
@@ -100,7 +101,9 @@ private:
 	ID3D11InputLayout* particleInputLayout;
 	ID3D11Buffer* particlesBuffer;
 	ID3D11ShaderResourceView* SRVparticles;
-	
+	ID3D11ShaderResourceView* TextureParticle;
+	ID3D11UnorderedAccessView * UAVParticles;
+
 	//---------------------------------------
 
 	ID3D11DepthStencilView* depthStencilView;
@@ -129,6 +132,7 @@ public:
 	void CreateParticleShaders();
 	void CreateParticleComputeShader();
 	void CreateParticleBuffer();
+	void updateParticles();
 	void CreateGBuffers(); // Deferred Tex, RTV, SRV
 	void CreateShaders();
 	HRESULT CreateDirect3DContext(HWND wndHandle);

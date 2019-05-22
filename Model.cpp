@@ -15,8 +15,11 @@ Model::Model(ID3D11Device* gDevice, ID3D11DeviceContext* gDeviceContext, ID3D11S
 
 Model::~Model()
 {
-	//VertexBuffer->Release();
+	//gTextureSRV->Release();
+	//gNormalSRV->Release();
 	//mtlBuffer->Release();
+	//VertexBuffer->Release();
+	//normalmapBuffer->Release();
 }
 
 

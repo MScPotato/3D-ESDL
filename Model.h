@@ -14,7 +14,7 @@ private:
 	ID3D11ShaderResourceView* gNormalSRV;
 	MTLBuffer mtlBufferData;
 	ID3D11Buffer* mtlBuffer;
-	ID3D11Buffer* normalmapBuffer;
+	//ID3D11Buffer* normalmapBuffer;
 
 	XMFLOAT4X4 modelSpace;
 	XMFLOAT3 worldCoords;
