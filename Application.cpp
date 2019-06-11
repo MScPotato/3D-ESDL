@@ -14,10 +14,8 @@ Application::Application(float width, float height, HWND wndHandle)
 	gDevice = nullptr;
 	gDeviceContext = nullptr;
 	gBackbufferRTV = nullptr;
-	//gIndexBuffer = nullptr;
 	gVertexLayout = nullptr;
 	gVertexShader = nullptr;
-	//gGeometryShader = nullptr;
 	gPixelShader = nullptr;
 	gSampleStateWrap = nullptr;
 	gTextureSRV = nullptr;
@@ -40,11 +38,10 @@ Application::Application(float width, float height, HWND wndHandle)
 	XMStoreFloat4x4(&constBuffData.world, XMMatrixIdentity());
 	constBuffData.view = camera->getView();
 	XMStoreFloat4x4(&constBuffData.projection, XMMatrixPerspectiveFovLH(XM_PI*0.45, (this->width / this->height), 0.1, 75));
-	//XMStoreFloat4x4(&constBuffData.projection, XMMatrixOrthographicLH(this->width, this->height, 1.f, 2.5f));
-	
+
 	ObjHandler = new ModelHandler();
 	lightHandler = new LightHandler();
-	sunLight = new Light_Dir(XMFLOAT3(lightX, lightY, lightZ));// , XMFLOAT3(0.f, 4.9f, -1.f), width, height);
+	sunLight = new Light_Dir(XMFLOAT3(lightX, lightY, lightZ));
 	wTerrain = new Terrain();
 	quadTree = new Quadtree();
 	camFrustum = new Frustum();
@@ -52,12 +49,8 @@ Application::Application(float width, float height, HWND wndHandle)
 	
 }
 
-Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
+Application::~Application() // RELEASE OF MEMORY
 {
-	//SRVparticles->Release();
-	//UAVParticles->Release();
-	//particlesBuffer->Release();
-
 	delete ObjHandler;
 	delete lightHandler;
 	delete sunLight;
@@ -66,7 +59,7 @@ Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 	delete camFrustum;
 
 	//---------------------------------------
-	//---------- Particles Rendering -----------
+	//---------- Particles Rendering --------
 	//---------------------------------------
 
 	UAVParticles->Release();
@@ -107,7 +100,7 @@ Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 	//--------- Default rendering ----------
 	gPixelShader->Release();
 	gVertexShader->Release();
-	//---------------------------------------	
+	//--------------------------------------
 	gSampleStateClamp->Release();
 	gSampleStateWrap->Release();
 	depthStencilBuffer->Release();
@@ -118,11 +111,9 @@ Application::~Application() // REMEMBER TO RELEASE ALL COM OBJs
 	gDeviceContext->Release();
 	gDevice->Release();
 
-	//gTextureSRV->Release();
 	if (pDebug != nullptr)
 	{
 		pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
-		//pDebug->ReportLiveObjects(D3D11_RLDO_DETAIL);
 		pDebug = nullptr;
 	}
 }
@@ -168,27 +159,6 @@ bool Application::initModels()
 	lightHandler->Init(gDevice, gDeviceContext);
 	sunLight->InitDirLight(gDevice, gDeviceContext);
 
-	//ObjHandler->addModel(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, L"candysun.obj");
-	//ObjHandler->addModel(-1.5, -3.0, -5.5, 1.0, 0.0, 0.0, 0.0, L"candyblue.obj");
-
-	//lightHandler->addLight(XMFLOAT3(7, 27.5, -5), XMFLOAT4(1, 1, 1, 1));
-	//lightHandler->addLight(XMFLOAT3(-5, 4.9, 3), XMFLOAT4(1, 0, 0, 1));
-	//lightHandler->addLight(XMFLOAT3(0, -3, 0), XMFLOAT4(0, 1, 0, 3));
-	//lightHandler->addLight(XMFLOAT3(4, 5, -5), XMFLOAT4(0, 0, 1, 1));
-	//lightHandler->addLight(XMFLOAT3(0, 0, 3), XMFLOAT4(1, 0, 1, 3));
-	//lightHandler->addLight(XMFLOAT3(3, 0, 0), XMFLOAT4(1, 1, 0, 3));
-	//lightHandler->addLight(XMFLOAT3(-3, 0, 0), XMFLOAT4(0, 1, 1, 3));
-
-	//lightHandler->CreateLightPosBuffer();
-	//lightHandler->CreateLightRGBABuffer();
-
-	//test för olika texture
-	//ObjHandler->addSphere(1.f, 4.9f, 1.f);
-	//ObjHandler->addCube(1.f, 4.9f, 15.f);
-	//ObjHandler->addCube(1.f, 4.9f, 7.f);
-	//ObjHandler->addCube(-5.f, 4.9f, 1.f);	
-	//ObjHandler->addCube(-1.f, 4.9f, -7.f);
-
 	//level 1
 	ObjHandler->addSphere(-15.f, 4.9f, -15.f);
 
@@ -208,16 +178,6 @@ bool Application::initModels()
 	//level 4
 	ObjHandler->addCube(3.f, 4.9f, 11.f);
 	ObjHandler->addCube(5.f, 4.9f, 11.f);
-
-
-	
-	//ObjHandler->addSphere(lightX, lightY, lightZ, 0.1);
-	//ObjHandler->addCube();
-	//3x trains
-	//ObjHandler->addModel(-1, 0, 0, 0.5, L"steyerdorf.obj");
-	//ObjHandler->addModel(0, 0, 0, 1, 0, 0, 0, L"steyerdorf.obj");
-	//ObjHandler->addModel(constBuffData.world, 5, 0, -1, 1, 0, -90, 0, L"steyerdorf.obj");
-
 	quadTree->InitTree(gDeviceContext, gTextureSRV, gConstantBuffer, ObjHandler, 64);
 
 	return true;
@@ -257,11 +217,9 @@ void Application::Update()
 	TerrainWalk();
 	camera->UpdateCamera(dt);
 
-	//UpdateConstBuffer();
 	UpdateCamBuffer();
 	camFrustum->ConstructFrustum(75, constBuffData.projection, camera->getView());
 	sunLight->Update();
-	//updateParticles();
 
 	gui.CalcFPS(dt);
 }
@@ -292,14 +250,14 @@ void Application::CreateShadowShader()
 
 	CHECK_HR(D3DCompileFromFile(
 		L"SMVertex.hlsl",		// filename
-		nullptr,			// optional macros
-		nullptr,			// optional include files
-		"VS_main",			// entry point
-		"vs_5_0",			// shader model (target)
-		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-		0,					// IGNORE...DEPRECATED.
-		&pVS,				// double pointer to ID3DBlob		
-		&errorBlob			// pointer for Error Blob messages.
+		nullptr,				// optional macros
+		nullptr,				// optional include files
+		"VS_main",				// entry point
+		"vs_5_0",				// shader model (target)
+		D3DCOMPILE_DEBUG,		// shader compile options (DEBUGGING)
+		0,						// IGNORE...DEPRECATED.
+		&pVS,					// double pointer to ID3DBlob		
+		&errorBlob				// pointer for Error Blob messages.
 	));
 
 	CHECK_HR(gDevice->CreateVertexShader(
@@ -913,7 +871,6 @@ HRESULT Application::UpdateCameraView()
 
 void Application::Render()
 {
-	// ------------------------------------------------------------------------
 	// Clear colors and depth buffers
 
 	// clear the back buffer to a deep blue
@@ -963,86 +920,95 @@ void Application::Render()
 	// ------------------------------------------------------------------------
 	//** Deferred Rendering **//	
 
+	// Switch to deferred shaders
 	gDeviceContext->VSSetShader(gDefVS, nullptr, 0);
 	gDeviceContext->GSSetShader(gDefGS, nullptr, 0);
 	gDeviceContext->PSSetShader(gDefPS, nullptr, 0);
 
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gDefVLayout);
-	//SetViewport();
+
 	UpdateCameraView();
-	drawScene();
+	drawScene(); // draw the scene depending on the quad  tree
 
 	// ------------------------------------------------------------------------
 	//** Quad Rendering **//
 	UINT quadSize = sizeof(float) * 5;
 	UINT offset = 0;
 	
+	// Unbind all possible existing render targets
 	ID3D11RenderTargetView* pNullRTV[] = { NULL };
 	ID3D11DepthStencilView* pNullDSV = nullptr;
 	gDeviceContext->OMSetRenderTargets(1, pNullRTV, pNullDSV);
 
+	// bind new single render target with a vertex buffer big enough for a single quad
 	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 	gDeviceContext->IASetVertexBuffers(0, 1, &gQuadBuffer, &quadSize, &offset);
 
+	// if anything outside the quad is rendered within our scene it is displayed as bright red
+	// should not be visible at any time.
 	float errorColor[] = { 1.0, 0.0, 0.0, 1 };
 	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, errorColor);
 	
+	// rebind quad shaders for the quad pass'
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
-	//gDeviceContext->HSSetShader(nullptr, nullptr, 0); <-not changed
-	//gDeviceContext->DSSetShader(nullptr, nullptr, 0); <-not changed
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0); // not needed
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
+	// input of g-buffer resources for the final quad texture
 	for (int i = 0; i < NROF_PASSES; i++) {
 		gDeviceContext->PSSetShaderResources(i, 1, &gDefSRV[i]);
 	}
 
+	// more resources for the qaud pass (Shadow mapping)
 	ID3D11ShaderResourceView* pSRV = sunLight->getShadowSRV();
 	gDeviceContext->PSSetShaderResources(NROF_PASSES, 1, &camDepth_SRV);
 	gDeviceContext->PSSetShaderResources(NROF_PASSES + 1, 1, &pSRV);
 
+	// Make sure we have the correct vertex layout
 	gDeviceContext->IASetInputLayout(gVertexLayout);
-	gDeviceContext->Draw(6, 0);
-	RenderImGui();
-
-	//gDeviceContext->IASetVertexBuffers(0, 0, nullptr, 0, 0); //test
+	gDeviceContext->Draw(6, 0); // 6 vertices for the quad
 
 	// ------------------------------------------------------------------------
-	//** Particles Rendering **//
-	//quadSize = sizeof(Particle);
-	//offset = 0;
-	//gDeviceContext->IASetVertexBuffers(0, 1, &particlesBuffer, &quadSize, &offset);
+	// Render of the debug menu on top of the quad to make is visible
+	// and before clearing of any resources
+	RenderImGui();
 
-	//ID3D11RenderTargetView* pNullRTV[] = { NULL };
-	//gDeviceContext->OMSetRenderTargets(NROF_PASSES, pNullRTV, nullptr);
+	// ------------------------------------------------------------------------
+	//** Particle Rendering **//
 
+	// Unbind all potentially existing vertex buffers
 	ID3D11Buffer* buffers[] = { nullptr };
 	UINT strides[] = { NULL };
 	UINT offsets[] = { NULL };
 	gDeviceContext->IASetVertexBuffers(0, 1, buffers, strides, offsets);
 
+	// Unbind all potentially existing shader resources
 	ID3D11ShaderResourceView* pNullSRV[] = { nullptr };
 	for (int i = 0; i < NROF_PASSES + 2; i++)
 		gDeviceContext->PSSetShaderResources(i, 1, pNullSRV);
 
-	//for (int i = 0; i < NROF_PASSES+2; i++) {
-	//	gDeviceContext->PSSetShaderResources(i, 1, nullptr);
-	//}
-
-
+	// Unbind vertex input layout, for the particle system
 	gDeviceContext->IASetInputLayout(nullptr);
+
+	// Set the compute shader
 	gDeviceContext->CSSetShader(particlesCompute, nullptr, 0);
+	// Set the unordered access view for our particle shaders
 	gDeviceContext->CSSetUnorderedAccessViews(0, 1, &UAVParticles, nullptr);
+	// Run the compute shader
 	gDeviceContext->Dispatch(10, 1, 1); // 10 * 100
 
+	// unbind all potential UAVs in compute shaders
 	ID3D11UnorderedAccessView* UAVViewNULL[1] = { nullptr };
 	gDeviceContext->CSSetUnorderedAccessViews(0, 1, UAVViewNULL, nullptr);
 
+	// Change to correct shaders
 	gDeviceContext->VSSetShader(particleVertex, nullptr, 0);
 	gDeviceContext->GSSetShader(particleGeometry, nullptr, 0);
 	gDeviceContext->PSSetShader(particlePixel, nullptr, 0);
+
 	gDeviceContext->IASetInputLayout(particleInputLayout);
+	// Set our new rendertarget with depth stencil
 	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, depthStencilView);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
@@ -1050,20 +1016,15 @@ void Application::Render()
 	gDeviceContext->VSSetShaderResources(0, 1, &SRVparticles);
 	gDeviceContext->PSSetShaderResources(0, 1, &TextureParticle);
 
+	// Draw scene
 	gDeviceContext->Draw(1000, 0);
+
+	// unbind all potential v-shader resources.
 	gDeviceContext->VSSetShaderResources(0, 1, pNullSRV);
 
-
-	////ComputeShader.SetUnorderedAccessView(TRIANGLE_SLOT, null); // too clean?
-	//gDeviceContext->CSSetShader(nullptr, nullptr, 0);
-
-	//gDeviceContext->DrawInstancedIndirect(particlesBuffer, 0);
-	//gDeviceContext->Draw(particles.size(), 0);
-
 	// ------------------------------------------------------------------------
-	//RenderImGui();
 
-	// Present the backbuffer / present the finished image quad
+	// Present the backbuffer / present the finished image
 	gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
 
 }
@@ -1268,15 +1229,6 @@ void Application::DepthStencil()
 
 	CHECK_HR(gDevice->CreateDepthStencilView(depthStencilBuffer, &depthStencilDesc, &depthStencilView));
 
-	// Render Target View
-	//D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	//ZeroMemory(&rtvDesc, sizeof(rtvDesc));
-	//rtvDesc.Format = depthStencilDesc.Format;
-	//rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	//rtvDesc.Texture2D.MipSlice = 0;
-
-	//CHECK_HR(gDevice->CreateRenderTargetView(shadowBuffer, &rtvDesc, &shadowRTV));
-
 	// Shader Reasource View
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(srvDesc));
@@ -1294,7 +1246,6 @@ HRESULT Application::UpdateCamBuffer()
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	ZeroMemory(&mappedResource, sizeof(mappedResource));
 	hr = gDeviceContext->Map(camBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	//Constantbuffer* dataPtr = (Constantbuffer*)mappedResource.pData;
 	memcpy(mappedResource.pData, &camera->getPosition(), sizeof(XMFLOAT4));
 	gDeviceContext->Unmap(camBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &camBuffer);

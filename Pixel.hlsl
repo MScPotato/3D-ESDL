@@ -13,16 +13,6 @@ cbuffer Camera_Buffer : register(b1)
     float3 camPos; //camerans pos
 };
 
-//cbuffer Light_Pos_Buffer : register(b2)
-//{
-//    float4 lightPos[6]; //not in use
-//};
-
-//cbuffer Light_Color_Buffer : register(b3)
-//{
-//    float4 lightRGBA[6]; //not in use
-//};
-
 cbuffer Shadow_buffer : register(b4)
 {
     float3 shadowPos; //ljusets pos
@@ -110,34 +100,6 @@ float4 PS_main(VS_OUT input) : SV_Target
     finalColor = (ambient + (shadow) * (diffuse + specular)) * color;
     
     return float4(finalColor, 1.f);
-    
-    
-    //float3 VecPosToLight = input.Pos.xyz - shadowPos;
-    //float3 VecLightposToLight = input.LightPos.xyz - shadowPos;
-    //float LenghtVecPosLight = length(VecPosToLight);
-    //float LenghtVecLightposLight = length(VecLightposToLight);
-    //float2 projCoords;
-    //projCoords.x = (camera.x / camera.w) * 0.5f + 0.5f;
-    //projCoords.y = (-camera.y / camera.w) * 0.5f + 0.5f;
-    //if (saturate(projCoords.x) == projCoords.x && saturate(projCoords.y) == projCoords.y)
-    //    float shadow = texture5.Sample(SamplerClamp, projCoords).x; // shadowmap sun
-    //float lightDV = camera.z / camera.w;
-    //lightDV -= 0.1f;
-    //if (lightDV < shadow)
-    //    float lightIntensity = 0.f;
-    //if (dot(normalize(normal), normalize(vecToLight)) > 0)
-    //{
-    //    lightIntensity = 1.f;
-    //}
-    //Rm = 2 * max(dot(vecToLight, normal), 0) * (normal - vecToLight);
-    //return float4(shadow, shadow, shadow, 1.f); //a shadow check
-    ////For debugging
-
-    //if (shadow == 0.99f)
-    //{
-    //    return float4(1.0f, 0.0f, 0.0f, 1.f);
-    //}
-    //return float4(shadowMap.x, 0.f, 0.f, 1.f);
 };
 
   

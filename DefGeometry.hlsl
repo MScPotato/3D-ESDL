@@ -8,7 +8,7 @@ struct VS_OUT
     float4 Pos : SV_POSITION;
     float4 wPos : POSITION;
     float2 TexCoord : TEXCOORD;
-    float3 normal : NORMAL;
+    //float3 normal : NORMAL;
 };
 
 struct GS_OUT
@@ -48,33 +48,23 @@ void GS_main(
     
     float3 vec1 = input[1].wPos.xyz - input[0].wPos.xyz;
     float3 vec2 = input[2].wPos.xyz - input[0].wPos.xyz;
-    float3 normal = normalize(cross(vec1, vec2));
+	float3 mNormal = normalize(cross(vec1, vec2));
     
     float3 tangent = calcTangent(input[0].wPos.xyz, input[1].wPos.xyz, input[2].wPos.xyz, input[0].TexCoord, input[1].TexCoord, input[2].TexCoord);
-    float3 bitangent = normalize(cross(tangent, normal));
+    float3 bitangent = normalize(cross(tangent, mNormal));
 
-    float3x3 TBN = float3x3(tangent, bitangent, normal);
+    float3x3 TBN = float3x3(tangent, bitangent, mNormal);
  
 	for (uint i = 0; i < 3; i++)
     {
-        if (dot(normalize(/*float3(0, 4.9, -2)*/camPos - input[i].wPos.xyz), normal) > 0.f)
+        if (dot(normalize(/*float3(0, 4.9, -2)*/camPos - input[i].wPos.xyz), mNormal) > 0.f)
         {
             element.Pos = input[i].Pos;
             element.wPos = input[i].wPos;
             element.TexCoord = input[i].TexCoord;
-            element.normal = input[i].normal;
+            element.normal = mNormal;
             element.TBN = TBN;
-            //element.bfTest = 1;
             output.Append(element);
         }
-        //else
-        //{
-        //    element.Pos = input[i].Pos;
-        //    element.wPos = input[i].wPos;
-        //    element.TexCoord = input[i].TexCoord;
-        //    element.normal = input[i].normal;
-        //    element.bfTest = 0;
-        //    output.Append(element);
-        //}
     }
 }

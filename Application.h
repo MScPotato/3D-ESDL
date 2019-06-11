@@ -50,8 +50,10 @@ private:
 	ID3D11RenderTargetView* gBackbufferRTV; // A "view" of a particular resource (the color buffer)
 
 	
-	// a resource to store Vertices in the GPU
-	ID3D11InputLayout* gVertexLayout;
+	// Resources to store Vertices in the GPU
+	ID3D11InputLayout* gDefVLayout;
+	ID3D11InputLayout* gVertexLayout; // used by deferred and quad rendering
+
 	ID3D11Buffer* gConstantBuffer;
 	ID3D11Buffer* gQuadBuffer;
 
@@ -69,7 +71,6 @@ private:
 	ID3D11Texture2D* gDefTex[NROF_PASSES];
 	ID3D11RenderTargetView* gDefRTV[NROF_PASSES];
 	ID3D11ShaderResourceView* gDefSRV[NROF_PASSES];
-	ID3D11InputLayout* gDefVLayout;
 
 	ID3D11VertexShader* gDefVS;
 	ID3D11GeometryShader* gDefGS;
